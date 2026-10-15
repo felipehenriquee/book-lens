@@ -1,0 +1,12 @@
+<app-modal-general
+  [title]="book.title"
+  size="max-w-[70vw]"
+  [zIndex]="50"
+  saveLabel="Salvar"
+  cancelLabel="Cancelar"
+  (closeRequested)="close()"
+  (cancel)="close()"
+  (save)="save()"
+>
+  <app-book-details-form [book]="book"></app-book-details-form>
+</app-modal-general>

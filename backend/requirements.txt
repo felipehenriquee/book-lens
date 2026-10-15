@@ -1,0 +1,18 @@
+fastapi>=0.115
+uvicorn[standard]>=0.32
+pydantic>=2.9
+pydantic-settings>=2.6
+sqlalchemy[asyncio]>=2.0
+asyncmy>=0.2.9
+# Alternativa ao asyncmy: aiomysql>=0.2.0 (ajuste o protocolo da DATABASE_URL de acordo)
+alembic>=1.13
+python-jose[cryptography]>=3.3
+passlib[bcrypt]>=1.7
+# passlib 1.7.4 quebra com bcrypt>=4.1 (ValueError: password cannot be longer than 72 bytes);
+# fixar <4.1 até o passlib lançar uma correção.
+bcrypt<4.1
+slowapi>=0.1.9
+httpx>=0.27
+google-genai>=0.3
+python-multipart>=0.0.12
+email-validator>=2.2

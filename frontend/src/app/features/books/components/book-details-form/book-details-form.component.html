@@ -1,0 +1,60 @@
+<div class="flex flex-col gap-6">
+  <app-google-book-info [book]="book"></app-google-book-info>
+
+  <div class="border-t pt-4">
+    <h3 class="text-sm font-semibold text-gray-700 mb-3">Meus dados</h3>
+
+    <form [formGroup]="form" class="flex flex-col gap-4">
+      <div class="flex items-center gap-3">
+        <span class="text-sm text-gray-600">Avaliação</span>
+        <app-star-rating formControlName="rating"></app-star-rating>
+      </div>
+
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <mat-form-field appearance="outline">
+          <mat-label>Formato</mat-label>
+          <mat-select formControlName="format">
+            @for (option of formatOptions; track option) {
+              <mat-option [value]="option">{{ option | bookFormat }}</mat-option>
+            }
+          </mat-select>
+        </mat-form-field>
+
+        <mat-form-field appearance="outline">
+          <mat-label>Status de leitura</mat-label>
+          <mat-select formControlName="readingStatus">
+            @for (option of statusOptions; track option) {
+              <mat-option [value]="option">{{ option | readingStatus }}</mat-option>
+            }
+          </mat-select>
+        </mat-form-field>
+      </div>
+
+      @if (isRead) {
+        <div class="flex flex-col gap-1">
+          <span class="text-sm text-gray-600">Data de leitura</span>
+          <app-month-year-picker formControlName="readDate"></app-month-year-picker>
+        </div>
+      }
+
+      <mat-checkbox formControlName="isGifted">Ganhei este livro de presente</mat-checkbox>
+
+      @if (!form.controls.isGifted.value) {
+        <mat-form-field appearance="outline">
+          <mat-label>Preço pago (R$)</mat-label>
+          <input matInput type="number" min="0" step="0.01" formControlName="paidPrice" />
+        </mat-form-field>
+      }
+
+      <div class="flex flex-col gap-1">
+        <span class="text-sm text-gray-600">{{ purchaseDateLabel }}</span>
+        <app-month-year-picker formControlName="purchaseDate"></app-month-year-picker>
+      </div>
+
+      <mat-form-field appearance="outline">
+        <mat-label>Notas</mat-label>
+        <textarea matInput rows="3" formControlName="userNotes"></textarea>
+      </mat-form-field>
+    </form>
+  </div>
+</div>

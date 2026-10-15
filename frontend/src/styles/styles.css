@@ -1,0 +1,5 @@
+/* Global styles entrypoint: Tailwind directives (via import) + base resets */
+@import './tailwind-classes.css';
+
+html, body { height: 100%; }
+body { margin: 0; font-family: Roboto, "Helvetica Neue", sans-serif; }

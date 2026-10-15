@@ -1,0 +1,33 @@
+services:
+  api:
+      build: .
+      command: uvicorn main:app --host 0.0.0.0 --port 8000 --reload
+      ports:
+        - "8000:8000"
+      env_file:
+        - .env
+      depends_on:
+        db:
+          condition: service_healthy
+      volumes:
+        - ./app:/code/app
+        - ./main.py:/code/main.py
+  db:
+    image: mariadb:11
+    environment:
+      MARIADB_DATABASE: booklens
+      MARIADB_USER: booklens
+      MARIADB_PASSWORD: booklens
+      MARIADB_ROOT_PASSWORD: booklens_root
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD-SHELL", "mysqladmin ping -h localhost -uroot -p$$MARIADB_ROOT_PASSWORD --silent"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+volumes:
+  mysql_data:

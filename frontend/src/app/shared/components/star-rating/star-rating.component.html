@@ -1,0 +1,17 @@
+<div class="flex items-center gap-0.5" (mouseleave)="onLeave()">
+  @for (star of stars; track star) {
+    <button
+      type="button"
+      class="p-0.5 leading-none bg-transparent border-0 outline-none disabled:cursor-not-allowed"
+      [class.cursor-default]="isReadonly"
+      [disabled]="disabled || isReadonly"
+      [attr.aria-label]="star + ' de ' + max + ' estrelas'"
+      (click)="selectStar(star)"
+      (mouseenter)="onEnter(star)"
+    >
+      <mat-icon [class]="isFilled(star) ? 'text-amber-400' : 'text-gray-300'">
+        {{ isFilled(star) ? 'star' : 'star_border' }}
+      </mat-icon>
+    </button>
+  }
+</div>

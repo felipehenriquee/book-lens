@@ -1,0 +1,61 @@
+<app-modal-general
+  [title]="modalTitle"
+  size="max-w-[70vw]"
+  saveLabel="Salvar"
+  cancelLabel="Cancelar"
+  [hideFooter]="step() === 1"
+  (closeRequested)="close()"
+  (cancel)="close()"
+  (save)="save()"
+>
+  @if (step() === 1) {
+    <div class="flex flex-col gap-4">
+      <mat-form-field appearance="outline">
+        <mat-label>Buscar por título</mat-label>
+        <input matInput [formControl]="searchControl" placeholder="Digite o título do livro..." />
+        @if (isSearching()) {
+          <mat-spinner matSuffix diameter="20"></mat-spinner>
+        }
+      </mat-form-field>
+
+      @if (searchResults().length > 0) {
+        <ul class="flex flex-col gap-2 max-h-96 overflow-y-auto">
+          @for (result of searchResults(); track $index) {
+            <li
+              class="flex items-center gap-3 border rounded-lg p-2 cursor-pointer hover:bg-gray-50"
+              (click)="selectBook(result)"
+            >
+              <img
+                [src]="result.coverUrl || 'https://placehold.co/40x60?text=%20'"
+                [alt]="result.title"
+                class="w-10 aspect-[2/3] object-cover rounded bg-gray-100 flex-shrink-0"
+              />
+              <div class="min-w-0">
+                <p class="font-medium truncate">{{ result.title }}</p>
+                <p class="text-sm text-gray-500 truncate">{{ result.authors.join(', ') || 'Autor desconhecido' }}</p>
+                @if (result.publisher) {
+                  <p class="text-xs text-gray-400 truncate">{{ result.publisher }}</p>
+                }
+              </div>
+            </li>
+          }
+        </ul>
+      } @else if (showNoResults) {
+        <p class="text-sm text-gray-400 italic">Nenhum livro encontrado para essa busca.</p>
+      }
+    </div>
+  } @else if (selectedBook()) {
+    <div class="flex flex-col gap-3">
+      <button
+        mat-button
+        type="button"
+        class="self-start !px-0 !min-w-0"
+        (click)="backToSearch()"
+      >
+        &larr; Voltar à busca
+      </button>
+
+      <app-book-details-form [book]="selectedBook()!"></app-book-details-form>
+    </div>
+  }
+</app-modal-general>

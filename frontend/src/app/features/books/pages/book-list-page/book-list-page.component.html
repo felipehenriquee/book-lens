@@ -1,0 +1,110 @@
+<div class="flex items-center justify-between mb-6">
+  <h1 class="text-2xl font-bold text-gray-900">Minha Coleção</h1>
+  <div class="flex gap-2">
+    <button mat-stroked-button (click)="openAddModal()">
+      <mat-icon class="align-middle mr-1">add</mat-icon>
+      Adicionar livro
+    </button>
+    <button mat-flat-button color="primary" class="btn-primary" (click)="openScanModal()">
+      <mat-icon class="align-middle mr-1">photo_camera</mat-icon>
+      Escanear livros
+    </button>
+  </div>
+</div>
+
+@if (books().length > 0) {
+  <div class="flex flex-wrap gap-3 mb-4">
+    <mat-form-field appearance="outline" class="!w-48">
+      <mat-label>Ordenar por</mat-label>
+      <mat-select [value]="sortBy()" (selectionChange)="sortBy.set($event.value)">
+        <mat-option value="title-asc">Alfabética (A-Z)</mat-option>
+        <mat-option value="title-desc">Alfabética (Z-A)</mat-option>
+        <mat-option value="rating-desc">Maior avaliação</mat-option>
+        <mat-option value="rating-asc">Menor avaliação</mat-option>
+        <mat-option value="price-desc">Maior preço</mat-option>
+        <mat-option value="price-asc">Menor preço</mat-option>
+      </mat-select>
+    </mat-form-field>
+
+    <mat-form-field appearance="outline" class="!w-40">
+      <mat-label>Status de leitura</mat-label>
+      <mat-select [value]="statusFilter()" (selectionChange)="statusFilter.set($event.value)">
+        <mat-option value="ALL">Todos</mat-option>
+        @for (option of statusOptions; track option) {
+          <mat-option [value]="option">{{ option | readingStatus }}</mat-option>
+        }
+      </mat-select>
+    </mat-form-field>
+
+    <mat-form-field appearance="outline" class="!w-40">
+      <mat-label>Tipo de capa</mat-label>
+      <mat-select [value]="formatFilter()" (selectionChange)="formatFilter.set($event.value)">
+        <mat-option value="ALL">Todos</mat-option>
+        @for (option of formatOptions; track option) {
+          <mat-option [value]="option">{{ option | bookFormat }}</mat-option>
+        }
+      </mat-select>
+    </mat-form-field>
+
+    <mat-form-field appearance="outline" class="!w-36">
+      <mat-label>Avaliação</mat-label>
+      <mat-select [value]="ratedFilter()" (selectionChange)="ratedFilter.set($event.value)">
+        <mat-option value="ALL">Todos</mat-option>
+        <mat-option value="RATED">Avaliados</mat-option>
+        <mat-option value="UNRATED">Não avaliados</mat-option>
+      </mat-select>
+    </mat-form-field>
+
+    @if (readYears().length > 0) {
+      <mat-form-field appearance="outline" class="!w-36">
+        <mat-label>Ano de leitura</mat-label>
+        <mat-select [value]="readYearFilter()" (selectionChange)="readYearFilter.set($event.value)">
+          <mat-option value="ALL">Todos</mat-option>
+          @for (year of readYears(); track year) {
+            <mat-option [value]="year">{{ year }}</mat-option>
+          }
+        </mat-select>
+      </mat-form-field>
+    }
+
+    @if (purchaseYears().length > 0) {
+      <mat-form-field appearance="outline" class="!w-36">
+        <mat-label>Ano de compra</mat-label>
+        <mat-select [value]="purchaseYearFilter()" (selectionChange)="purchaseYearFilter.set($event.value)">
+          <mat-option value="ALL">Todos</mat-option>
+          @for (year of purchaseYears(); track year) {
+            <mat-option [value]="year">{{ year }}</mat-option>
+          }
+        </mat-select>
+      </mat-form-field>
+    }
+  </div>
+}
+
+@if (isLoading()) {
+  <div class="flex justify-center py-12">
+    <mat-spinner diameter="32"></mat-spinner>
+  </div>
+} @else if (books().length === 0) {
+  <div class="card-surface text-center text-gray-500 py-12">
+    Sua coleção está vazia. Escaneie a estante ou adicione um livro manualmente para começar!
+  </div>
+} @else if (visibleBooks().length === 0) {
+  <div class="card-surface text-center text-gray-500 py-12">
+    Nenhum livro encontrado com esses filtros.
+  </div>
+} @else {
+  <div class="grid gap-4 grid-cols-[repeat(auto-fill,minmax(320px,1fr))]">
+    @for (book of visibleBooks(); track book.id) {
+      <app-book-card [book]="book" (deleteRequested)="onDeleteRequested($event)"></app-book-card>
+    }
+  </div>
+}
+
+@if (isScanModalOpen()) {
+  <app-scan-dialog (closed)="onScanClosed()" (saved)="onScanSaved($event)"></app-scan-dialog>
+}
+
+@if (isAddModalOpen()) {
+  <app-add-book-modal (closed)="onAddClosed()" (saved)="onAddSaved($event)"></app-add-book-modal>
+}

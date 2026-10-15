@@ -1,0 +1,71 @@
+<div class="flex flex-col sm:flex-row gap-4">
+  @if (showCover) {
+    <img
+      [src]="book.coverUrl || 'https://placehold.co/120x180?text=%20'"
+      [alt]="book.title"
+      class="w-32 sm:w-[30%] aspect-[2/3] object-cover rounded-lg mx-auto sm:mx-0 flex-shrink-0 bg-gray-100"
+    />
+  }
+
+  <div class="min-w-0 flex-1 flex flex-col gap-2">
+    <p class="text-gray-700">{{ book.authors.join(', ') || 'Autor desconhecido' }}</p>
+
+    <div class="flex flex-wrap gap-x-4 gap-y-1 text-sm text-gray-500">
+      @if (book.publisher) {
+        <span>{{ book.publisher }}</span>
+      }
+      @if (book.publishedDate) {
+        <span>{{ book.publishedDate }}</span>
+      }
+      @if (book.pageCount) {
+        <span>{{ book.pageCount }} páginas</span>
+      }
+    </div>
+
+    @if (book.averageRating) {
+      <div class="flex items-center gap-1 text-sm text-amber-600">
+        <mat-icon class="!w-4 !h-4 !text-base">star</mat-icon>
+        {{ book.averageRating }} no Google Books
+      </div>
+    }
+
+    @if (book.categories.length > 0) {
+      <mat-chip-set>
+        @for (category of book.categories; track category) {
+          <mat-chip>{{ category }}</mat-chip>
+        }
+      </mat-chip-set>
+    }
+
+    @if (formattedListPrice) {
+      <p class="text-sm text-gray-500">Preço de tabela: {{ formattedListPrice }}</p>
+    }
+
+    @if (book.isbn13) {
+      <p class="text-xs text-gray-400">ISBN: {{ book.isbn13 }}</p>
+    }
+
+    @if (book.previewLink) {
+      <button
+        mat-button
+        type="button"
+        class="self-start !px-0 !min-w-0"
+        (click)="openOnGoogleBooks()"
+      >
+        <mat-icon class="align-middle mr-1">open_in_new</mat-icon>
+        Abrir no Google Books
+      </button>
+    }
+
+    @if (book.description) {
+      <div
+        class="text-sm text-gray-600 mt-1 max-h-32 overflow-y-auto"
+        [innerHTML]="book.description"
+      ></div>
+    }
+
+    @if (!book.description && !book.publisher && !book.pageCount) {
+      <p class="text-sm text-gray-400 italic">Não encontramos mais detalhes sobre este livro no Google Books.</p>
+    }
+  </div>
+</div>

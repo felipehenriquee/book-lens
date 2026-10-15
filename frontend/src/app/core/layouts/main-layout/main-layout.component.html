@@ -1,0 +1,40 @@
+<mat-sidenav-container class="h-screen">
+  <mat-sidenav
+    [mode]="isMobile() ? 'over' : 'side'"
+    [opened]="sidenavOpened()"
+    (openedChange)="sidenavOpened.set($event)"
+    class="w-56 border-r"
+  >
+    <div class="p-4 text-xl font-bold text-indigo-600">BookLens</div>
+    <mat-nav-list>
+      <a mat-list-item routerLink="/app/books" (click)="closeSidenavOnMobileNav()">
+        <mat-icon matListItemIcon>menu_book</mat-icon>
+        <span matListItemTitle>Minha Coleção</span>
+      </a>
+    </mat-nav-list>
+  </mat-sidenav>
+
+  <mat-sidenav-content>
+    <mat-toolbar color="primary" class="flex justify-between">
+      <div class="flex items-center gap-2">
+        @if (isMobile()) {
+          <button mat-icon-button (click)="toggleSidenav()" aria-label="Abrir menu">
+            <mat-icon>menu</mat-icon>
+          </button>
+        }
+        <span>BookLens</span>
+      </div>
+      <button mat-icon-button (click)="logout()" aria-label="Sair">
+        <mat-icon>logout</mat-icon>
+      </button>
+    </mat-toolbar>
+
+    <main class="app-container py-6">
+      <router-outlet></router-outlet>
+    </main>
+
+    <footer class="text-center text-sm text-gray-400 py-4">
+      &copy; BookLens
+    </footer>
+  </mat-sidenav-content>
+</mat-sidenav-container>

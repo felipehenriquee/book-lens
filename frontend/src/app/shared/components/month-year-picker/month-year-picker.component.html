@@ -1,0 +1,29 @@
+<div class="flex gap-2">
+  <mat-form-field appearance="outline" class="flex-1">
+    <mat-label>Mês</mat-label>
+    <mat-select
+      [value]="month()"
+      [disabled]="disabled"
+      (selectionChange)="onMonthChange($event.value)"
+    >
+      <mat-option [value]="null">—</mat-option>
+      @for (m of months; track m.value) {
+        <mat-option [value]="m.value">{{ m.label }}</mat-option>
+      }
+    </mat-select>
+  </mat-form-field>
+
+  <mat-form-field appearance="outline" class="flex-1">
+    <mat-label>Ano</mat-label>
+    <mat-select
+      [value]="year()"
+      [disabled]="disabled"
+      (selectionChange)="onYearChange($event.value)"
+    >
+      <mat-option [value]="null">—</mat-option>
+      @for (y of years(); track y) {
+        <mat-option [value]="y">{{ y }}</mat-option>
+      }
+    </mat-select>
+  </mat-form-field>
+</div>
