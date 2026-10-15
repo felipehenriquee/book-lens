@@ -50,6 +50,11 @@ class Settings(BaseSettings):
     # fluxo normal de enriquecimento via Google Books.
     OCR_MOCK_ENABLED: bool = False
 
+    # Usuário de desenvolvimento criado automaticamente ao subir a API.
+    # Deixe vazio em produção para não criar nada.
+    DEV_USER_EMAIL: str | None = None
+    DEV_USER_PASSWORD: str | None = None
+
     # Upload de arquivos
     MAX_UPLOAD_SIZE_BYTES: int = 10 * 1024 * 1024  # 10MB
     ALLOWED_IMAGE_CONTENT_TYPES: set[str] = {

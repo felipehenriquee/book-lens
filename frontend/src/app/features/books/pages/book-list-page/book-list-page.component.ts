@@ -1,39 +1,45 @@
 import { Component, OnInit, computed, inject, signal } from '@angular/core';
-import { MatDialog } from '@angular/material/dialog';
-import { MatButtonModule } from '@angular/material/button';
-import { MatIconModule } from '@angular/material/icon';
-import { MatFormFieldModule } from '@angular/material/form-field';
-import { MatSelectModule } from '@angular/material/select';
+import { RouterLink } from '@angular/router';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { BookCardComponent } from '../../components/book-card/book-card.component';
-import { ScanDialogComponent } from '../../components/scan-dialog/scan-dialog.component';
 import { AddBookModalComponent } from '../../components/add-book-modal/add-book-modal.component';
 import { BookService } from '../../services/book.service';
+import { LibraryUiService } from '../../services/library-ui.service';
 import { NotificationService } from '../../../../core/services/notification.service';
-import { ConfirmDialogComponent } from '../../../../shared/components/confirm-dialog/confirm-dialog.component';
-import { ReadingStatusPipe } from '../../../../shared/pipes/reading-status.pipe';
+import { BookCoverComponent } from '../../../../shared/components/book-cover/book-cover.component';
+import { STATUS_COLORS } from '../../../../shared/components/status-badge/status-badge.component';
 import { BookFormatPipe } from '../../../../shared/pipes/book-format.pipe';
 import { Book, BookFormat, ReadingStatus } from '../../models/book.model';
 
-type SortOption = 'title-asc' | 'title-desc' | 'rating-asc' | 'rating-desc' | 'price-asc' | 'price-desc';
+type SortOption =
+  | 'recent'
+  | 'title-asc'
+  | 'title-desc'
+  | 'author'
+  | 'rating-desc'
+  | 'rating-asc'
+  | 'price-desc'
+  | 'price-asc';
 type StatusFilter = 'ALL' | ReadingStatus;
 type FormatFilter = 'ALL' | BookFormat;
 type RatedFilter = 'ALL' | 'RATED' | 'UNRATED';
 const ALL = 'ALL' as const;
 
+interface StatusChip {
+  value: StatusFilter;
+  label: string;
+  count: number;
+}
+
 @Component({
   selector: 'app-book-list-page',
   standalone: true,
   imports: [
+    RouterLink,
     BookCardComponent,
-    ScanDialogComponent,
+    BookCoverComponent,
     AddBookModalComponent,
-    MatButtonModule,
-    MatIconModule,
-    MatFormFieldModule,
-    MatSelectModule,
     MatProgressSpinnerModule,
-    ReadingStatusPipe,
     BookFormatPipe,
   ],
   templateUrl: './book-list-page.component.html',
@@ -41,17 +47,16 @@ const ALL = 'ALL' as const;
 export class BookListPageComponent implements OnInit {
   private readonly bookService = inject(BookService);
   private readonly notificationService = inject(NotificationService);
-  private readonly dialog = inject(MatDialog);
+  readonly libraryUi = inject(LibraryUiService);
 
   readonly isLoading = signal(false);
   readonly books = signal<Book[]>([]);
-  readonly isScanModalOpen = signal(false);
-  readonly isAddModalOpen = signal(false);
+  readonly isMarkingRead = signal(false);
+  readonly showMoreFilters = signal(false);
 
   readonly formatOptions: BookFormat[] = ['PAPERBACK', 'HARDCOVER', 'EBOOK', 'POCKET'];
-  readonly statusOptions: ReadingStatus[] = ['UNREAD', 'READING', 'READ', 'PAUSED', 'ABANDONED'];
 
-  readonly sortBy = signal<SortOption>('title-asc');
+  readonly sortBy = signal<SortOption>('recent');
   readonly statusFilter = signal<StatusFilter>(ALL);
   readonly formatFilter = signal<FormatFilter>(ALL);
   readonly ratedFilter = signal<RatedFilter>(ALL);
@@ -63,9 +68,61 @@ export class BookListPageComponent implements OnInit {
     this.extractYears(this.books(), (book) => book.purchaseDate)
   );
 
+  readonly activeExtraFilters = computed(
+    () =>
+      [this.formatFilter(), this.ratedFilter(), this.readYearFilter(), this.purchaseYearFilter()].filter(
+        (value) => value !== ALL
+      ).length
+  );
+
+  readonly stats = computed(() => {
+    const total = this.books().length;
+    const pct = (n: number) => (total ? `${Math.round((n / total) * 100)}%` : '0%');
+    const read = this.countByStatus('READ');
+    const reading = this.countByStatus('READING');
+    const unread = this.countByStatus('UNREAD');
+    return [
+      { label: 'Livros na estante', value: total, pct: total ? '100%' : '0%', color: '#15171C' },
+      { label: 'Lidos', value: read, pct: pct(read), color: STATUS_COLORS.READ.dot },
+      { label: 'Lendo agora', value: reading, pct: pct(reading), color: STATUS_COLORS.READING.dot },
+      { label: 'Não lidos', value: unread, pct: pct(unread), color: STATUS_COLORS.UNREAD.dot },
+    ];
+  });
+
+  /** Pausado/Abandonado não estão no design: só aparecem quando há livros nesses status. */
+  readonly statusChips = computed<StatusChip[]>(() => {
+    const chips: StatusChip[] = [
+      { value: ALL, label: 'Todos', count: this.books().length },
+      { value: 'READ', label: 'Lidos', count: this.countByStatus('READ') },
+      { value: 'READING', label: 'Lendo', count: this.countByStatus('READING') },
+      { value: 'UNREAD', label: 'Não lidos', count: this.countByStatus('UNREAD') },
+      { value: 'PAUSED', label: 'Pausados', count: this.countByStatus('PAUSED') },
+      { value: 'ABANDONED', label: 'Abandonados', count: this.countByStatus('ABANDONED') },
+    ];
+    return chips.filter(
+      (chip) => !['PAUSED', 'ABANDONED'].includes(chip.value) || chip.count > 0
+    );
+  });
+
+  /** Livro mais recente com status "Lendo", destacado no "Continue lendo". */
+  readonly currentlyReading = computed(() =>
+    this.sortBooks(
+      this.books().filter((book) => book.readingStatus === 'READING'),
+      'recent'
+    )[0]
+  );
+
   readonly visibleBooks = computed(() => {
     let result = this.books();
+    const search = this.normalize(this.libraryUi.search().trim());
 
+    if (search) {
+      result = result.filter((book) =>
+        [book.title, book.author, book.publisher].some((field) =>
+          this.normalize(field ?? '').includes(search)
+        )
+      );
+    }
     if (this.statusFilter() !== ALL) {
       result = result.filter((book) => book.readingStatus === this.statusFilter());
     }
@@ -91,52 +148,56 @@ export class BookListPageComponent implements OnInit {
     this.loadBooks();
   }
 
-  openScanModal(): void {
-    this.isScanModalOpen.set(true);
-  }
-
-  openAddModal(): void {
-    this.isAddModalOpen.set(true);
-  }
-
-  onScanClosed(): void {
-    this.isScanModalOpen.set(false);
-  }
-
-  onScanSaved(books: Book[]): void {
-    this.isScanModalOpen.set(false);
-    if (books.length > 0) {
-      this.saveBooks(books);
+  readingProgress(book: Book): number {
+    if (!book.pageCount) {
+      return 0;
     }
+    return Math.min(100, Math.round(((book.currentPage ?? 0) / book.pageCount) * 100));
+  }
+
+  setSort(value: string): void {
+    this.sortBy.set(value as SortOption);
+  }
+
+  clearFilters(): void {
+    this.libraryUi.search.set('');
+    this.statusFilter.set(ALL);
+    this.formatFilter.set(ALL);
+    this.ratedFilter.set(ALL);
+    this.readYearFilter.set(ALL);
+    this.purchaseYearFilter.set(ALL);
+  }
+
+  markAsRead(book: Book): void {
+    this.isMarkingRead.set(true);
+    const updated = Object.assign(Object.create(Object.getPrototypeOf(book)), book, {
+      readingStatus: 'READ',
+    }) as Book;
+    this.bookService.update(book.id, updated).subscribe({
+      next: (saved) => {
+        this.books.update((current) => current.map((item) => (item.id === saved.id ? saved : item)));
+        this.notificationService.success(`"${saved.title}" marcado como lido.`);
+        this.isMarkingRead.set(false);
+      },
+      error: () => this.isMarkingRead.set(false),
+    });
   }
 
   onAddClosed(): void {
-    this.isAddModalOpen.set(false);
+    this.libraryUi.isAddModalOpen.set(false);
   }
 
   onAddSaved(book: Book): void {
-    this.isAddModalOpen.set(false);
+    this.libraryUi.isAddModalOpen.set(false);
     this.saveBooks([book]);
   }
 
-  onDeleteRequested(bookId: string): void {
-    const dialogRef = this.dialog.open(ConfirmDialogComponent, {
-      data: {
-        title: 'Remover livro',
-        message: 'Tem certeza que deseja remover este livro da sua coleção?',
-        confirmText: 'Remover',
-      },
-    });
+  private countByStatus(status: ReadingStatus): number {
+    return this.books().filter((book) => book.readingStatus === status).length;
+  }
 
-    dialogRef.afterClosed().subscribe((confirmed?: boolean) => {
-      if (!confirmed) {
-        return;
-      }
-      this.bookService.delete(bookId).subscribe(() => {
-        this.books.update((current) => current.filter((book) => book.id !== bookId));
-        this.notificationService.success('Livro removido da coleção.');
-      });
-    });
+  private normalize(value: string): string {
+    return value.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
   }
 
   private loadBooks(): void {
@@ -173,23 +234,29 @@ export class BookListPageComponent implements OnInit {
   private sortBooks(books: Book[], sortBy: SortOption): Book[] {
     const sorted = [...books];
     switch (sortBy) {
+      case 'recent':
+        sorted.sort((a, b) => (b.createdAt?.getTime() ?? 0) - (a.createdAt?.getTime() ?? 0));
+        break;
       case 'title-asc':
         sorted.sort((a, b) => a.title.localeCompare(b.title, 'pt-BR'));
         break;
       case 'title-desc':
         sorted.sort((a, b) => b.title.localeCompare(a.title, 'pt-BR'));
         break;
-      case 'rating-asc':
-        sorted.sort((a, b) => this.compareNullable(a.rating, b.rating, 'asc'));
+      case 'author':
+        sorted.sort((a, b) => a.author.localeCompare(b.author, 'pt-BR'));
         break;
       case 'rating-desc':
         sorted.sort((a, b) => this.compareNullable(a.rating, b.rating, 'desc'));
         break;
-      case 'price-asc':
-        sorted.sort((a, b) => this.compareNullable(a.paidPrice, b.paidPrice, 'asc'));
+      case 'rating-asc':
+        sorted.sort((a, b) => this.compareNullable(a.rating, b.rating, 'asc'));
         break;
       case 'price-desc':
         sorted.sort((a, b) => this.compareNullable(a.paidPrice, b.paidPrice, 'desc'));
+        break;
+      case 'price-asc':
+        sorted.sort((a, b) => this.compareNullable(a.paidPrice, b.paidPrice, 'asc'));
         break;
     }
     return sorted;

@@ -61,6 +61,11 @@ class BookBase(BaseModel):
         default=None, max_length=7, description="Data em que terminei de ler, formato 'YYYY-MM'"
     )
     user_notes: str | None = None
+    gifted_by: str | None = Field(default=None, max_length=120, description="Quem me deu o livro")
+    current_page: int | None = Field(default=None, ge=0, description="Página em que parei (status Lendo)")
+    # Exceção à regra acima: o total de páginas fica salvo para mostrar o
+    # progresso de leitura na listagem sem consultar o Google Books.
+    page_count: int | None = Field(default=None, ge=1, description="Total de páginas do livro")
 
     @field_validator("purchase_date", "read_date")
     @classmethod
@@ -70,9 +75,12 @@ class BookBase(BaseModel):
     @model_validator(mode="after")
     def _clear_price_when_gifted(self) -> Self:
         # Regra de negócio aplicada no servidor, não só escondida na UI:
-        # um livro ganhado não tem preço pago por mim.
+        # um livro ganhado não tem preço pago por mim, e um comprado não tem
+        # quem presenteou.
         if self.is_gifted:
             self.paid_price = None
+        else:
+            self.gifted_by = None
         return self
 
 
@@ -96,6 +104,9 @@ class BookUpdate(BaseModel):
     paid_price: Decimal | None = Field(default=None, ge=0, max_digits=10, decimal_places=2)
     read_date: str | None = Field(default=None, max_length=7)
     user_notes: str | None = None
+    gifted_by: str | None = Field(default=None, max_length=120)
+    current_page: int | None = Field(default=None, ge=0)
+    page_count: int | None = Field(default=None, ge=1)
 
     @field_validator("purchase_date", "read_date")
     @classmethod
@@ -106,6 +117,8 @@ class BookUpdate(BaseModel):
     def _clear_price_when_gifted(self) -> Self:
         if self.is_gifted:
             self.paid_price = None
+        elif self.is_gifted is False:
+            self.gifted_by = None
         return self
 
 

@@ -24,6 +24,11 @@
     @apply bg-white rounded-xl border border-gray-200 shadow-sm p-6 hover:shadow-md transition-shadow duration-200;
   }
 
+  /* Select nativo do novo design (DESIGN.md) */
+  .filter-select {
+    @apply h-11 min-w-[160px] border border-solid border-line-input rounded-[10px] bg-surface px-3 font-[inherit] text-sm normal-case tracking-normal font-normal text-ink cursor-pointer;
+  }
+
   /* Status Badges */
   .badge-read {
     @apply bg-green-100 text-green-800 text-xs font-semibold px-2.5 py-0.5 rounded-full;

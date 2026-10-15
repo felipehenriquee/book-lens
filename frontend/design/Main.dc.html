@@ -1,0 +1,194 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<title>Minha biblioteca</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&amp;family=Space+Grotesk:wght@500;600;700&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#F5F5F2}
+a{color:#3A4FD9}a:hover{color:#2A3BB0}
+</style>
+</helmet>
+<div style="min-height:100vh;background:#F5F5F2;color:#15171C;font-family:'IBM Plex Sans',system-ui,sans-serif">
+
+<header style="background:#FFFFFF;border-bottom:1px solid #E4E4DF">
+<div style="max-width:1280px;margin:0 auto;padding:14px 24px;display:flex;flex-wrap:wrap;align-items:center;gap:12px 28px">
+<a href="Main.dc.html" style="display:flex;align-items:center;gap:10px;text-decoration:none;color:#15171C">
+<span style="width:36px;height:36px;border-radius:10px;background:#15171C;display:flex;align-items:center;justify-content:center"><svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 4h11a2 2 0 0 1 2 2v14H7a2 2 0 0 1-2-2z"></path><path d="M5 18a2 2 0 0 1 2-2h11"></path></svg></span>
+<span style="font-family:'Space Grotesk',sans-serif;font-weight:700;font-size:21px;letter-spacing:-0.02em">Estante</span>
+</a>
+<nav aria-label="Principal" style="display:flex;gap:4px;flex-wrap:wrap">
+<a href="Main.dc.html" style="padding:12px 14px;border-radius:8px;background:#ECEEFC;color:#2A3BB0;text-decoration:none;font-weight:600;font-size:14px">Biblioteca</a>
+<a href="#" style="padding:12px 14px;border-radius:8px;color:#4A4F59;text-decoration:none;font-weight:500;font-size:14px">Listas</a>
+<a href="#" style="padding:12px 14px;border-radius:8px;color:#4A4F59;text-decoration:none;font-weight:500;font-size:14px">Estatísticas</a>
+</nav>
+<div style="flex:1 1 260px;min-width:200px;display:flex;align-items:center;gap:8px;background:#F5F5F2;border:1px solid #E4E4DF;border-radius:10px;padding:0 12px;height:44px;box-sizing:border-box">
+<svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#5B606B" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"></circle><path d="m20 20-3.5-3.5"></path></svg>
+<label for="busca" style="position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)">Buscar livros</label>
+<input id="busca" type="search" placeholder="Buscar por título, autor ou editora" style="border:0;background:transparent;outline:none;flex:1;min-width:0;font:inherit;font-size:14px;color:#15171C">
+</div>
+<a href="Scan.dc.html" style="display:inline-flex;align-items:center;gap:8px;height:44px;padding:0 18px;border-radius:10px;background:#3A4FD9;color:#FFFFFF;text-decoration:none;font-weight:600;font-size:14px">
+<svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 8a2 2 0 0 1 2-2h2.5l1.5-2h6l1.5 2H19a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><circle cx="12" cy="13" r="3.5"></circle></svg>
+Escanear livros</a>
+<a href="#" style="display:inline-flex;align-items:center;justify-content:center;gap:8px;height:44px;padding:0 16px;border-radius:10px;border:1px solid #DADAD4;color:#15171C;text-decoration:none;font-weight:600;font-size:14px;background:#FFFFFF">
+<svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#15171C" stroke-width="2" stroke-linecap="round"><path d="M12 5v14M5 12h14"></path></svg>
+Manual</a>
+</div>
+</header>
+
+<main style="max-width:1280px;margin:0 auto;padding:40px 24px 72px;display:flex;flex-direction:column;gap:32px">
+
+<div style="display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:16px">
+<div>
+<p style="margin:0 0 8px;font-size:12px;font-weight:600;letter-spacing:0.1em;text-transform:uppercase;color:#5B606B">Sua coleção</p>
+<h1 style="margin:0;font-family:'Space Grotesk',sans-serif;font-size:46px;line-height:1.05;letter-spacing:-0.03em;font-weight:700">Minha biblioteca</h1>
+</div>
+<div style="display:flex;align-items:center;gap:10px">
+<label for="ordem" style="font-size:14px;color:#5B606B">Ordenar por</label>
+<select id="ordem" style="height:44px;border:1px solid #DADAD4;border-radius:10px;background:#FFFFFF;padding:0 12px;font:inherit;font-size:14px;color:#15171C">
+<option>Adicionados recentemente</option>
+<option>Título (A–Z)</option>
+<option>Autor</option>
+<option>Avaliação</option>
+</select>
+</div>
+</div>
+
+<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:16px">
+<sc-for list="{{stats}}" as="s" hint-placeholder-count="4">
+<div style="background:#FFFFFF;border:1px solid #E4E4DF;border-radius:14px;padding:20px;display:flex;flex-direction:column;gap:10px">
+<span style="font-size:13px;color:#5B606B;font-weight:500">{{s.label}}</span>
+<span style="font-family:'Space Grotesk',sans-serif;font-size:36px;line-height:1;font-weight:700;letter-spacing:-0.02em">{{s.value}}</span>
+<div style="height:6px;border-radius:3px;background:#EEEFF1;overflow:hidden"><div style="height:100%;width:{{s.pct}};background:{{s.color}};border-radius:3px"></div></div>
+</div>
+</sc-for>
+</div>
+
+<div style="display:flex;flex-wrap:wrap;gap:16px">
+<section aria-labelledby="continue" style="flex:2 1 520px;background:#FFFFFF;border:1px solid #E4E4DF;border-radius:16px;padding:24px;display:flex;gap:24px;align-items:center;flex-wrap:wrap">
+<div style="width:104px;aspect-ratio:2/3;flex:none;border-radius:4px 8px 8px 4px;background:#B5532A;color:#FFFFFF;padding:12px 10px;box-sizing:border-box;display:flex;flex-direction:column;justify-content:space-between;box-shadow:inset 5px 0 0 rgba(0,0,0,0.14),0 8px 18px rgba(20,20,20,0.12)">
+<span style="font-family:'Space Grotesk',sans-serif;font-weight:700;font-size:15px;line-height:1.1">Torto Arado</span>
+<span style="font-size:10px">Itamar Vieira Junior</span>
+</div>
+<div style="flex:1 1 280px;display:flex;flex-direction:column;gap:12px">
+<h2 id="continue" style="margin:0;font-size:12px;font-weight:600;letter-spacing:0.1em;text-transform:uppercase;color:#5B606B">Continue lendo</h2>
+<div>
+<p style="margin:0;font-family:'Space Grotesk',sans-serif;font-size:26px;font-weight:700;letter-spacing:-0.02em">Torto Arado</p>
+<p style="margin:4px 0 0;font-size:14px;color:#5B606B">Itamar Vieira Junior · Todavia</p>
+</div>
+<div style="display:flex;flex-direction:column;gap:6px">
+<div style="display:flex;justify-content:space-between;font-size:13px;color:#4A4F59"><span>Página 168 de 264</span><span style="font-weight:600;color:#15171C">64%</span></div>
+<div style="height:8px;border-radius:4px;background:#EEEFF1;overflow:hidden"><div style="height:100%;width:64%;background:#3A4FD9;border-radius:4px"></div></div>
+</div>
+<div style="display:flex;gap:8px;flex-wrap:wrap">
+<button type="button" style="height:44px;padding:0 16px;border-radius:10px;border:1px solid #DADAD4;background:#FFFFFF;font:inherit;font-size:14px;font-weight:600;color:#15171C;cursor:pointer">Atualizar página</button>
+<button type="button" style="height:44px;padding:0 16px;border-radius:10px;border:0;background:#E3F3EA;font:inherit;font-size:14px;font-weight:600;color:#17603C;cursor:pointer">Marcar como lido</button>
+</div>
+</div>
+</section>
+
+<section aria-labelledby="promo" style="flex:1 1 320px;background:#15171C;color:#FFFFFF;border-radius:16px;padding:28px;display:flex;flex-direction:column;justify-content:space-between;gap:20px">
+<span style="width:48px;height:48px;border-radius:12px;background:#3A4FD9;display:flex;align-items:center;justify-content:center"><svg aria-hidden="true" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8V6a2 2 0 0 1 2-2h2M16 4h2a2 2 0 0 1 2 2v2M20 16v2a2 2 0 0 1-2 2h-2M8 20H6a2 2 0 0 1-2-2v-2"></path><path d="M9 8v8M12 8v8M15 8v8"></path></svg></span>
+<div>
+<h2 id="promo" style="margin:0 0 8px;font-family:'Space Grotesk',sans-serif;font-size:24px;line-height:1.15;letter-spacing:-0.02em">Cadastre vários livros com uma foto</h2>
+<p style="margin:0;font-size:14px;line-height:1.55;color:#C9CCD3">Fotografe capas ou lombadas. Identificamos cada título e buscamos autor, editora e resumo no Google Books.</p>
+</div>
+<a href="Scan.dc.html" style="align-self:flex-start;display:inline-flex;align-items:center;gap:8px;height:44px;padding:0 18px;border-radius:10px;background:#FFFFFF;color:#15171C;text-decoration:none;font-weight:600;font-size:14px">Escanear agora
+<svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#15171C" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"></path></svg></a>
+</section>
+</div>
+
+<section aria-labelledby="todos" style="display:flex;flex-direction:column;gap:20px">
+<div style="display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:12px">
+<h2 id="todos" style="margin:0;font-family:'Space Grotesk',sans-serif;font-size:26px;letter-spacing:-0.02em">Todos os livros</h2>
+<div style="display:flex;gap:8px;flex-wrap:wrap">
+<sc-for list="{{chips}}" as="c" hint-placeholder-count="4">
+<button type="button" onClick="{{c.pick}}" aria-pressed="{{c.pressed}}" style="height:44px;padding:0 16px;border-radius:999px;border:1px solid;font:inherit;font-size:14px;font-weight:500;cursor:pointer;display:inline-flex;align-items:center;gap:8px;{{c.style}}">{{c.label}}<span style="font-size:12px;opacity:0.75">{{c.count}}</span></button>
+</sc-for>
+</div>
+</div>
+
+<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(184px,1fr));gap:32px 24px">
+<sc-for list="{{books}}" as="b" hint-placeholder-count="10">
+<a href="Livro.dc.html" style="display:flex;flex-direction:column;gap:12px;text-decoration:none;color:#15171C">
+<div style="aspect-ratio:2/3;border-radius:4px 10px 10px 4px;background:{{b.cover}};color:{{b.ink}};padding:18px 14px;box-sizing:border-box;display:flex;flex-direction:column;justify-content:space-between;box-shadow:inset 6px 0 0 rgba(0,0,0,0.13),0 1px 2px rgba(20,20,20,0.08),0 10px 24px rgba(20,20,20,0.10)">
+<span style="font-family:'Space Grotesk',sans-serif;font-weight:700;font-size:21px;line-height:1.08;letter-spacing:-0.01em">{{b.title}}</span>
+<span style="font-size:12px;font-weight:500">{{b.author}}</span>
+</div>
+<div style="display:flex;flex-direction:column;gap:4px">
+<span style="font-size:15px;font-weight:600;line-height:1.3">{{b.title}}</span>
+<span style="font-size:13px;color:#5B606B">{{b.author}}</span>
+<div style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin-top:6px">
+<span style="font-size:12px;font-weight:600;padding:4px 10px;border-radius:999px;background:{{b.sbg}};color:{{b.sfg}}">{{b.slabel}}</span>
+<span aria-label="Avaliação {{b.rating}} de 5" style="font-size:13px;letter-spacing:1px;color:#C98500">{{b.stars}}</span>
+</div>
+</div>
+</a>
+</sc-for>
+</div>
+</section>
+</main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":1560}}'>
+var BOOKS = [
+  { title: 'Dom Casmurro', author: 'Machado de Assis', status: 'lido', rating: 5, cover: '#2B3A2F', ink: '#F1E9D2' },
+  { title: 'Torto Arado', author: 'Itamar Vieira Junior', status: 'lendo', rating: 0, cover: '#B5532A', ink: '#FFFFFF' },
+  { title: 'Sapiens', author: 'Yuval Noah Harari', status: 'lido', rating: 4, cover: '#E6DFCC', ink: '#1C1C1C' },
+  { title: '1984', author: 'George Orwell', status: 'nao', rating: 0, cover: '#B3122B', ink: '#FFFFFF' },
+  { title: 'O Pequeno Príncipe', author: 'Antoine de Saint-Exupéry', status: 'lido', rating: 5, cover: '#1F3B73', ink: '#F5D76E' },
+  { title: 'Grande Sertão: Veredas', author: 'Guimarães Rosa', status: 'nao', rating: 0, cover: '#6B4E2E', ink: '#F3E6CC' },
+  { title: 'Hábitos Atômicos', author: 'James Clear', status: 'lendo', rating: 0, cover: '#F2C230', ink: '#1C1C1C' },
+  { title: 'A Hora da Estrela', author: 'Clarice Lispector', status: 'lido', rating: 4, cover: '#3D2C5E', ink: '#FFFFFF' },
+  { title: 'Duna', author: 'Frank Herbert', status: 'nao', rating: 0, cover: '#D98A3D', ink: '#1C1C1C' },
+  { title: 'O Alquimista', author: 'Paulo Coelho', status: 'lido', rating: 3, cover: '#2F6F73', ink: '#FFFFFF' }
+];
+var STATUS = {
+  lido: { label: 'Lido', bg: '#E3F3EA', fg: '#17603C' },
+  lendo: { label: 'Lendo', bg: '#FFF1D6', fg: '#7A4F00' },
+  nao: { label: 'Não lido', bg: '#EEEFF1', fg: '#3F444D' }
+};
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.state = { filter: 'todos' };
+  }
+  renderVals() {
+    var self = this;
+    var f = this.state.filter;
+    var count = function (s) { return BOOKS.filter(function (b) { return b.status === s; }).length; };
+    var total = BOOKS.length;
+    var pct = function (n) { return Math.round((n / total) * 100) + '%'; };
+    var stats = [
+      { label: 'Livros na estante', value: total, pct: '100%', color: '#15171C' },
+      { label: 'Lidos', value: count('lido'), pct: pct(count('lido')), color: '#2E9E64' },
+      { label: 'Lendo agora', value: count('lendo'), pct: pct(count('lendo')), color: '#E0A100' },
+      { label: 'Não lidos', value: count('nao'), pct: pct(count('nao')), color: '#8A8F99' }
+    ];
+    var chips = [['todos', 'Todos', total], ['lido', 'Lidos', count('lido')], ['lendo', 'Lendo', count('lendo')], ['nao', 'Não lidos', count('nao')]].map(function (c) {
+      var on = f === c[0];
+      return {
+        label: c[1], count: c[2], pressed: on ? 'true' : 'false',
+        pick: function () { self.setState({ filter: c[0] }); },
+        style: on ? 'background:#15171C;color:#FFFFFF;border-color:#15171C' : 'background:#FFFFFF;color:#15171C;border-color:#DADAD4'
+      };
+    });
+    var books = BOOKS.filter(function (b) { return f === 'todos' || b.status === f; }).map(function (b) {
+      var s = STATUS[b.status];
+      return {
+        title: b.title, author: b.author, cover: b.cover, ink: b.ink, rating: b.rating,
+        slabel: s.label, sbg: s.bg, sfg: s.fg,
+        stars: b.rating ? '★★★★★'.slice(0, b.rating) + '☆☆☆☆☆'.slice(0, 5 - b.rating) : ''
+      };
+    });
+    return { stats: stats, chips: chips, books: books };
+  }
+}
+</script>
+</body>
+</html>

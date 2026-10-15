@@ -61,6 +61,9 @@ class BookModel(Base):
     paid_price: Mapped[Decimal | None] = mapped_column(DECIMAL(10, 2), nullable=True)
     read_date: Mapped[str | None] = mapped_column(String(7), nullable=True)
     user_notes: Mapped[str | None] = mapped_column(Text, nullable=True)
+    gifted_by: Mapped[str | None] = mapped_column(String(120), nullable=True)
+    current_page: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    page_count: Mapped[int | None] = mapped_column(Integer, nullable=True)
 
     created_at: Mapped[datetime] = mapped_column(server_default=func.now())
     updated_at: Mapped[datetime] = mapped_column(server_default=func.now(), onupdate=func.now())

@@ -1,6 +1,11 @@
 import { BookFormat, ReadingStatus } from './book.model';
 
 export class DetectedBook {
+  /** Caixa do livro na foto: [ymin, xmin, ymax, xmax] normalizado 0–1000 (vazio se a Gemini não informar). */
+  box2d: number[] = [];
+  /** Idioma no Google Books (ISO 639-1, ex.: "pt"). */
+  language?: string;
+
   constructor(
     public title: string,
     public authors: string[],
@@ -29,7 +34,7 @@ export class DetectedBook {
   ) {}
 
   static fromJson(json: any): DetectedBook {
-    return new DetectedBook(
+    const book = new DetectedBook(
       json.title,
       json.authors || [],
       json.publisher,
@@ -46,6 +51,9 @@ export class DetectedBook {
       json.list_price_amount,
       json.list_price_currency
     );
+    book.box2d = Array.isArray(json.box_2d) && json.box_2d.length === 4 ? json.box_2d : [];
+    book.language = json.language ?? undefined;
+    return book;
   }
 }
 

@@ -29,6 +29,12 @@ class OCRService:
             )
         except Exception as exc:  # erros de rede/parsing da Gemini API
             logger.exception("Falha ao chamar a Gemini API para OCR")
+            # Cota esgotada em todos os modelos: avisa o usuário em vez do erro genérico.
+            if getattr(exc, "code", None) == 429:
+                raise HTTPException(
+                    status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+                    detail="Limite de uso da IA atingido por hoje. Tente novamente mais tarde.",
+                ) from exc
             raise HTTPException(
                 status_code=status.HTTP_502_BAD_GATEWAY,
                 detail="Falha ao processar a imagem com o serviço de OCR.",

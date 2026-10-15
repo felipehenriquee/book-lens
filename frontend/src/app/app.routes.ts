@@ -18,6 +18,22 @@ export const routes: Routes = [
       },
     ],
   },
+  // Fluxo de scan: tela cheia com header próprio (etapas), fora do MainLayout.
+  {
+    path: 'app/escanear',
+    canActivate: [authGuard],
+    loadComponent: () =>
+      import('./features/books/pages/scan-page/scan-page.component').then((m) => m.ScanPageComponent),
+  },
+  // Detalhe do livro: também tem header próprio (breadcrumb), fora do MainLayout.
+  {
+    path: 'app/books/:id',
+    canActivate: [authGuard],
+    loadComponent: () =>
+      import('./features/books/pages/book-detail-page/book-detail-page.component').then(
+        (m) => m.BookDetailPageComponent
+      ),
+  },
   // Main App Layout (Authenticated)
   {
     path: 'app',

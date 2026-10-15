@@ -1,67 +1,44 @@
-import { Component, OnDestroy, OnInit, inject, signal } from '@angular/core';
-import { Router, RouterLink, RouterOutlet } from '@angular/router';
-import { BreakpointObserver } from '@angular/cdk/layout';
-import { Subscription } from 'rxjs';
-import { MatToolbarModule } from '@angular/material/toolbar';
-import { MatSidenavModule } from '@angular/material/sidenav';
-import { MatListModule } from '@angular/material/list';
-import { MatIconModule } from '@angular/material/icon';
-import { MatButtonModule } from '@angular/material/button';
+import { Component, inject } from '@angular/core';
+import { Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 import { AuthService } from '../../services/auth.service';
+import { LibraryUiService } from '../../../features/books/services/library-ui.service';
 
-// Mesmo ponto de quebra do "lg" do Tailwind: abaixo disso vira menu hambúrguer.
-const TABLET_BREAKPOINT = '(max-width: 1024px)';
+const LIBRARY_URL = '/app/books';
 
 @Component({
   selector: 'app-main-layout',
   standalone: true,
-  imports: [
-    RouterOutlet,
-    RouterLink,
-    MatToolbarModule,
-    MatSidenavModule,
-    MatListModule,
-    MatIconModule,
-    MatButtonModule,
-  ],
+  imports: [RouterOutlet, RouterLink, RouterLinkActive],
   templateUrl: './main-layout.component.html',
 })
-export class MainLayoutComponent implements OnInit, OnDestroy {
+export class MainLayoutComponent {
   private readonly authService = inject(AuthService);
   private readonly router = inject(Router);
-  private readonly breakpointObserver = inject(BreakpointObserver);
-  private breakpointSubscription?: Subscription;
+  readonly libraryUi = inject(LibraryUiService);
 
-  readonly isMobile = signal(false);
-  readonly sidenavOpened = signal(true);
-
-  ngOnInit(): void {
-    this.breakpointSubscription = this.breakpointObserver
-      .observe(TABLET_BREAKPOINT)
-      .subscribe(({ matches }) => {
-        this.isMobile.set(matches);
-        // Ao cruzar o breakpoint, ajusta o estado padrão: aberto fixo no
-        // desktop, fechado por cima (overlay) no tablet/mobile.
-        this.sidenavOpened.set(!matches);
-      });
+  onSearch(value: string): void {
+    this.libraryUi.search.set(value);
+    this.goToLibrary();
   }
 
-  ngOnDestroy(): void {
-    this.breakpointSubscription?.unsubscribe();
+  openScan(): void {
+    this.router.navigateByUrl('/app/escanear');
   }
 
-  toggleSidenav(): void {
-    this.sidenavOpened.update((opened) => !opened);
-  }
-
-  closeSidenavOnMobileNav(): void {
-    if (this.isMobile()) {
-      this.sidenavOpened.set(false);
-    }
+  openManual(): void {
+    this.goToLibrary();
+    this.libraryUi.isAddModalOpen.set(true);
   }
 
   logout(): void {
     this.authService.logout();
     this.router.navigate(['/login']);
+  }
+
+  /** Busca e o modal manual vivem na listagem: a partir de outra tela, volta para ela. */
+  private goToLibrary(): void {
+    if (this.router.url.split('?')[0] !== LIBRARY_URL) {
+      this.router.navigateByUrl(LIBRARY_URL);
+    }
   }
 }

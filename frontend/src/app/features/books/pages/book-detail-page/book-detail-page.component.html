@@ -1,113 +1,302 @@
-<a routerLink="/app/books" class="text-indigo-600 hover:underline text-sm">&larr; Voltar para a coleção</a>
-
-@if (isLoading()) {
-  <div class="flex justify-center py-12">
-    <mat-spinner diameter="32"></mat-spinner>
-  </div>
-}
-
-@if (!isLoading() && book(); as currentBook) {
-  <div class="card-surface mt-4 flex flex-col sm:flex-row gap-6">
-    <img
-      [src]="currentBook.coverUrl || 'https://placehold.co/160x240?text=Sem+Capa'"
-      [alt]="currentBook.title"
-      class="w-40 h-60 object-cover rounded-lg mx-auto sm:mx-0 flex-shrink-0"
-    />
-
-    <div class="flex-1 min-w-0">
-      <div class="flex items-start justify-between gap-2">
-        <h1 class="text-2xl font-bold text-gray-900">{{ currentBook.title }}</h1>
-        <button
-          mat-icon-button
-          type="button"
-          matTooltip="Editar"
-          [disabled]="isLoadingEditData()"
-          (click)="openEditModal()"
+<div class="min-h-screen bg-page text-ink font-sans">
+  <header class="bg-surface border-0 border-b border-solid border-line">
+    <div class="max-w-[1280px] mx-auto px-6 py-3 flex flex-wrap items-center justify-between gap-x-6 gap-y-3 box-border">
+      <nav aria-label="Navegação" class="flex flex-wrap items-center gap-1.5 text-sm min-w-0">
+        <a routerLink="/app/books" class="inline-flex items-center gap-2 min-h-11 no-underline text-ink font-semibold">
+          <svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#15171C" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M11 18l-6-6 6-6"></path></svg>
+          Biblioteca
+        </a>
+        @if (book(); as b) {
+          <span aria-hidden="true" class="text-[#9A9EA6]">/</span>
+          <span class="text-muted truncate max-w-[50vw]">{{ b.title }}</span>
+        }
+      </nav>
+      @if (googleInfo()?.previewLink; as link) {
+        <a
+          [href]="link"
+          target="_blank"
+          rel="noopener"
+          class="inline-flex items-center gap-2 h-11 px-4 rounded-[10px] border border-solid border-line-input bg-surface hover:bg-surface-muted text-ink no-underline font-semibold text-sm box-border"
         >
-          @if (isLoadingEditData()) {
-            <mat-spinner diameter="20"></mat-spinner>
-          } @else {
-            <mat-icon>edit</mat-icon>
-          }
-        </button>
-      </div>
-
-      <p class="text-gray-700 mt-1">{{ currentBook.author }}</p>
-
-      <dl class="grid grid-cols-2 gap-3 mt-4 text-sm">
-        @if (currentBook.publisher) {
-          <div><dt class="text-gray-400">Editora</dt><dd>{{ currentBook.publisher }}</dd></div>
-        }
-        @if (currentBook.format) {
-          <div><dt class="text-gray-400">Formato</dt><dd>{{ currentBook.format | bookFormat }}</dd></div>
-        }
-        @if (currentBook.rating) {
-          <div>
-            <dt class="text-gray-400">Avaliação</dt>
-            <dd><app-star-rating [value]="currentBook.rating" [isReadonly]="true"></app-star-rating></dd>
-          </div>
-        }
-
-        @if (currentBook.isGifted) {
-          <div><dt class="text-gray-400">Aquisição</dt><dd>🎁 Recebido de presente</dd></div>
-        } @else {
-          @if (currentBook.purchaseDate) {
-            <div><dt class="text-gray-400">Comprado em</dt><dd>{{ currentBook.purchaseDate | monthYearDisplay }}</dd></div>
-          }
-          @if (currentBook.paidPrice) {
-            <div><dt class="text-gray-400">Preço pago</dt><dd>{{ currentBook.paidPrice | currency: 'BRL' }}</dd></div>
-          }
-        }
-
-        @if (currentBook.readDate) {
-          <div><dt class="text-gray-400">Lido em</dt><dd>{{ currentBook.readDate | monthYearDisplay }}</dd></div>
-        }
-      </dl>
-
-      <span class="inline-block mt-3" [class]="statusBadgeClass(currentBook)">
-        {{ currentBook.readingStatus | readingStatus }}
-      </span>
-
-      @if (currentBook.userNotes) {
-        <p class="mt-4 text-sm text-gray-600 whitespace-pre-line">{{ currentBook.userNotes }}</p>
+          Ver no Google Books
+          <svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#15171C" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 4h6v6M20 4l-9 9M18 14v5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h5"></path></svg>
+        </a>
       }
-
-      @if (currentBook.googleBooksId) {
-        <button
-          mat-button
-          type="button"
-          class="mt-4 self-start !px-0 !min-w-0 block"
-          (click)="toggleDetails()"
-        >
-          {{ isDetailsExpanded() ? 'Ocultar detalhes' : 'Ver mais detalhes' }}
-        </button>
-
-        @if (isDetailsExpanded() && isLoadingDetails()) {
-          <div class="flex justify-center py-4">
-            <mat-spinner diameter="24"></mat-spinner>
-          </div>
-        }
-        @if (isDetailsExpanded() && !isLoadingDetails() && googleBookInfo(); as info) {
-          <div class="mt-2">
-            <app-google-book-info [book]="info" [showCover]="false"></app-google-book-info>
-          </div>
-        }
-      }
-
-      <div class="mt-6 flex justify-end gap-2">
-        <button mat-flat-button color="warn" class="btn-danger" (click)="deleteBook()">
-          <mat-icon class="align-middle mr-1">delete_outline</mat-icon>
-          Remover livro
-        </button>
-      </div>
     </div>
-  </div>
-}
+  </header>
 
-@if (editModalBook(); as editBook) {
-  <app-book-preview-dialog
-    [book]="editBook"
-    (closed)="onEditClosed()"
-    (saved)="onEditSaved($event)"
-  ></app-book-preview-dialog>
-}
+  @if (isLoading()) {
+    <div class="flex justify-center py-24">
+      <mat-spinner diameter="32"></mat-spinner>
+    </div>
+  }
+
+  @if (!isLoading() && book(); as b) {
+    <main class="max-w-[1280px] mx-auto px-6 pt-10 pb-[72px] flex flex-wrap gap-12 items-start box-border">
+      <!-- Capa -->
+      <div class="w-[200px] sm:w-auto sm:flex-[0_1_300px] sm:min-w-[200px] sm:max-w-[300px] mx-auto sm:mx-0 flex flex-col gap-4">
+        <app-book-cover [title]="b.title" [author]="b.author" [coverUrl]="b.coverUrl"></app-book-cover>
+        @if (b.googleBooksId) {
+          <p class="m-0 flex items-center gap-2 text-[13px] text-muted">
+            <svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#5B606B" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"></circle><path d="M12 8v5M12 16h.01"></path></svg>
+            Dados importados do Google Books
+          </p>
+        }
+      </div>
+
+      <div class="flex-[1_1_560px] min-w-0 flex flex-col gap-8">
+        <!-- Identificação -->
+        <div class="flex flex-col gap-3">
+          <app-status-badge class="self-start" [status]="status()"></app-status-badge>
+          <h1 class="m-0 font-display text-[40px] sm:text-[56px] leading-none tracking-[-0.035em] [overflow-wrap:anywhere]">{{ b.title }}</h1>
+          <p class="m-0 text-lg text-ink-2">{{ b.author }}</p>
+          <dl class="m-0 mt-2 flex flex-wrap gap-x-8 gap-y-3">
+            @if (b.publisher || googleInfo()?.publisher; as publisher) {
+              <div>
+                <dt class="text-[11px] font-semibold tracking-[0.08em] uppercase text-muted">Editora</dt>
+                <dd class="m-0 mt-[3px] text-[15px] font-medium">{{ publisher }}</dd>
+              </div>
+            }
+            @if (googleInfo()?.publishedDate; as published) {
+              <div>
+                <dt class="text-[11px] font-semibold tracking-[0.08em] uppercase text-muted">Publicação</dt>
+                <dd class="m-0 mt-[3px] text-[15px] font-medium">{{ published.slice(0, 4) }}</dd>
+              </div>
+            }
+            @if (pageCount(); as pages) {
+              <div>
+                <dt class="text-[11px] font-semibold tracking-[0.08em] uppercase text-muted">Páginas</dt>
+                <dd class="m-0 mt-[3px] text-[15px] font-medium">{{ pages }}</dd>
+              </div>
+            }
+            @if (languageLabel(); as language) {
+              <div>
+                <dt class="text-[11px] font-semibold tracking-[0.08em] uppercase text-muted">Idioma</dt>
+                <dd class="m-0 mt-[3px] text-[15px] font-medium">{{ language }}</dd>
+              </div>
+            }
+            @if (genre(); as g) {
+              <div>
+                <dt class="text-[11px] font-semibold tracking-[0.08em] uppercase text-muted">Gênero</dt>
+                <dd class="m-0 mt-[3px] text-[15px] font-medium">{{ g }}</dd>
+              </div>
+            }
+            @if (isLoadingGoogle()) {
+              <div class="flex items-center gap-2 text-[13px] text-muted">
+                <mat-spinner diameter="16"></mat-spinner> Buscando dados no Google Books…
+              </div>
+            }
+          </dl>
+        </div>
+
+        <!-- Resumo -->
+        @if (summary()) {
+          <section aria-labelledby="resumo" class="flex flex-col gap-2.5 max-w-[720px]">
+            <h2 id="resumo" class="m-0 text-xs font-semibold tracking-[0.1em] uppercase text-muted">Resumo</h2>
+            <p
+              class="m-0 text-base leading-[1.7] text-[#2B2E35] whitespace-pre-line"
+              [class.line-clamp-4]="!isSummaryExpanded()"
+            >{{ summary() }}</p>
+            @if (summary().length > 320) {
+              <button
+                type="button"
+                (click)="isSummaryExpanded.set(!isSummaryExpanded())"
+                class="self-start min-h-11 p-0 border-0 bg-transparent font-[inherit] text-sm font-semibold text-primary hover:text-primary-hover cursor-pointer"
+              >{{ isSummaryExpanded() ? 'Mostrar menos' : 'Ler resumo completo' }}</button>
+            }
+          </section>
+        }
+
+        <!-- Meus dados -->
+        <section aria-labelledby="meus" class="bg-surface border border-solid border-line rounded-[20px] p-5 sm:p-8 flex flex-col gap-7 box-border" [formGroup]="form">
+          <div class="flex flex-wrap justify-between items-baseline gap-2">
+            <h2 id="meus" class="m-0 font-display text-[26px] tracking-[-0.02em]">Meus dados</h2>
+            <span class="text-[13px] text-muted">Só você vê estas informações</span>
+          </div>
+
+          <!-- Avaliação -->
+          <div class="flex flex-col gap-2.5">
+            <span id="lbl-aval" class="text-sm font-semibold">Avaliação</span>
+            <div role="group" aria-labelledby="lbl-aval" class="flex flex-wrap items-center gap-0.5">
+              @for (star of stars; track star) {
+                <button
+                  type="button"
+                  (click)="setRating(star)"
+                  [attr.aria-label]="star + (star === 1 ? ' estrela' : ' estrelas')"
+                  [attr.aria-pressed]="rating() === star"
+                  class="w-11 h-11 border-0 bg-transparent p-0 flex items-center justify-center cursor-pointer"
+                >
+                  <svg aria-hidden="true" width="30" height="30" viewBox="0 0 24 24">
+                    <path
+                      d="M12 3.2l2.7 5.5 6 .9-4.35 4.25 1.03 6-5.38-2.84-5.38 2.84 1.03-6L3.3 9.6l6-.9z"
+                      [attr.fill]="star <= rating() ? '#F2A20C' : 'none'"
+                      [attr.stroke]="star <= rating() ? '#D98A00' : '#B5B9C0'"
+                      stroke-width="1.5"
+                      stroke-linejoin="round"
+                    ></path>
+                  </svg>
+                </button>
+              }
+              <span class="ml-2.5 text-sm text-ink-2">{{ ratingText() }}</span>
+            </div>
+          </div>
+
+          <!-- Status -->
+          <div class="flex flex-col gap-2.5">
+            <span id="lbl-status" class="text-sm font-semibold">Status de leitura</span>
+            <div role="radiogroup" aria-labelledby="lbl-status" class="grid grid-cols-3 sm:grid-cols-5 gap-1 p-1 bg-surface-sunken rounded-xl max-w-[680px]">
+              @for (option of statusOptions; track option.value) {
+                <button
+                  type="button"
+                  role="radio"
+                  [attr.aria-checked]="status() === option.value"
+                  (click)="setStatus(option.value)"
+                  class="h-11 border-0 rounded-[9px] font-[inherit] text-sm font-semibold cursor-pointer flex items-center justify-center gap-2 px-2"
+                  [class]="status() === option.value ? 'bg-surface text-ink shadow-[0_1px_3px_rgba(20,20,20,0.12)]' : 'bg-transparent text-ink-2 hover:text-ink'"
+                >
+                  <span class="w-2 h-2 rounded-full flex-none" [style.background]="statusColors[option.value].dot"></span>
+                  {{ option.label }}
+                </button>
+              }
+            </div>
+            @if (status() === 'READING') {
+              <div class="flex flex-wrap items-center gap-3 mt-1">
+                <label for="pagina" class="text-sm text-ink-2">Página atual</label>
+                <input
+                  id="pagina"
+                  type="number"
+                  min="0"
+                  [attr.max]="pageCount() ?? null"
+                  placeholder="0"
+                  formControlName="currentPage"
+                  class="w-24 h-11 box-border border border-solid border-line-input rounded-[10px] px-3 font-[inherit] text-[15px] text-ink bg-surface outline-none focus:border-primary focus:shadow-[0_0_0_3px_#ECEEFC]"
+                />
+                @if (pageCount(); as pages) {
+                  <span class="text-sm text-muted">de {{ pages }}</span>
+                }
+              </div>
+            }
+            @if (status() === 'READ') {
+              <div class="flex flex-col gap-2.5 mt-1">
+                <span class="text-[13px] font-semibold text-ink-2">Quando terminou de ler</span>
+                <app-month-year-picker formControlName="readDate"></app-month-year-picker>
+              </div>
+            }
+          </div>
+
+          <!-- Formato -->
+          <div class="flex flex-col gap-2.5">
+            <span id="lbl-formato" class="text-sm font-semibold">Formato</span>
+            <div role="radiogroup" aria-labelledby="lbl-formato" class="grid gap-2.5 grid-cols-2 sm:grid-cols-[repeat(auto-fit,minmax(130px,1fr))]">
+              @for (option of formatOptions; track option.value) {
+                <button
+                  type="button"
+                  role="radio"
+                  [attr.aria-checked]="form.controls.format.value === option.value"
+                  (click)="setFormat(option.value)"
+                  class="min-h-[88px] rounded-[14px] border-[1.5px] border-solid font-[inherit] cursor-pointer flex flex-col items-start justify-between gap-2.5 p-3.5 text-left"
+                  [class]="form.controls.format.value === option.value ? 'border-primary bg-[#F3F5FF] text-[#1E2B8F]' : 'border-line bg-surface text-ink hover:border-line-input'"
+                >
+                  <svg aria-hidden="true" width="24" height="24" viewBox="0 0 24 24" fill="none" [attr.stroke]="form.controls.format.value === option.value ? '#3A4FD9' : '#4A4F59'" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path [attr.d]="option.icon"></path></svg>
+                  <span class="text-sm font-semibold">{{ option.label }}</span>
+                </button>
+              }
+            </div>
+          </div>
+
+          <!-- Presente / preço -->
+          <div class="flex flex-col gap-4 p-[18px] rounded-[14px] bg-surface-muted border border-solid border-[#ECECE7]">
+            <div class="flex items-center justify-between gap-4">
+              <span class="flex flex-col gap-0.5">
+                <span id="lbl-presente" class="text-sm font-semibold">Ganhei este livro de presente</span>
+                <span class="text-[13px] text-muted">Oculta o preço e registra quem presenteou</span>
+              </span>
+              <button
+                type="button"
+                role="switch"
+                [attr.aria-checked]="isGifted()"
+                aria-labelledby="lbl-presente"
+                (click)="toggleGift()"
+                class="w-[52px] h-11 flex-none border-0 bg-transparent p-0 cursor-pointer flex items-center"
+              >
+                <span
+                  class="w-[52px] h-[30px] rounded-full box-border p-[3px] flex transition-colors"
+                  [class]="isGifted() ? 'bg-primary justify-end' : 'bg-[#C9CCD3] justify-start'"
+                >
+                  <span class="w-6 h-6 rounded-full bg-white shadow-[0_1px_3px_rgba(0,0,0,0.25)]"></span>
+                </span>
+              </button>
+            </div>
+            @if (isGifted()) {
+              <div class="flex flex-col gap-1.5">
+                <label for="dequem" class="text-[13px] font-semibold text-ink-2">Presente de</label>
+                <input
+                  id="dequem"
+                  type="text"
+                  maxlength="120"
+                  placeholder="Nome de quem presenteou"
+                  formControlName="giftedBy"
+                  class="h-12 box-border border border-solid border-line-input rounded-[10px] px-3.5 font-[inherit] text-[15px] text-ink bg-surface outline-none focus:border-primary focus:shadow-[0_0_0_3px_#ECEEFC]"
+                />
+              </div>
+            } @else {
+              <div class="flex flex-col gap-1.5">
+                <label for="preco" class="text-[13px] font-semibold text-ink-2">Preço pago</label>
+                <div class="flex items-center h-12 box-border border border-solid border-line-input rounded-[10px] bg-surface max-w-[280px] focus-within:border-primary focus-within:shadow-[0_0_0_3px_#ECEEFC]">
+                  <span class="pl-3.5 pr-1 text-[15px] font-semibold text-muted">R$</span>
+                  <input
+                    id="preco"
+                    type="text"
+                    inputmode="decimal"
+                    placeholder="0,00"
+                    formControlName="paidPrice"
+                    class="flex-1 min-w-0 border-0 outline-none bg-transparent font-[inherit] text-[15px] text-ink pl-1 pr-3.5"
+                  />
+                </div>
+              </div>
+            }
+          </div>
+
+          <!-- Data de compra / presente -->
+          <fieldset class="border-0 m-0 p-0 flex flex-col gap-2.5 min-w-0">
+            <legend class="p-0 mb-2.5 text-sm font-semibold">{{ isGifted() ? 'Data em que ganhou' : 'Data de compra' }}</legend>
+            <app-month-year-picker formControlName="purchaseDate"></app-month-year-picker>
+          </fieldset>
+
+          <!-- Notas -->
+          <div class="flex flex-col gap-1.5">
+            <label for="notas" class="text-sm font-semibold">Notas</label>
+            <textarea
+              id="notas"
+              rows="4"
+              placeholder="Citações favoritas, onde comprou, impressões da leitura…"
+              formControlName="userNotes"
+              class="box-border border border-solid border-line-input rounded-xl p-3.5 font-[inherit] text-[15px] leading-normal text-ink bg-surface resize-y outline-none focus:border-primary focus:shadow-[0_0_0_3px_#ECEEFC]"
+            ></textarea>
+          </div>
+
+          <!-- Ações -->
+          <div class="flex flex-wrap justify-between items-center gap-3 pt-5 border-0 border-t border-solid border-line">
+            <button
+              type="button"
+              (click)="deleteBook()"
+              class="h-11 px-1 border-0 bg-transparent font-[inherit] text-sm font-semibold text-danger hover:underline cursor-pointer"
+            >Remover da biblioteca</button>
+            <div class="flex flex-wrap gap-2">
+              <a
+                routerLink="/app/books"
+                class="inline-flex items-center h-12 px-[18px] rounded-xl border border-solid border-line-input bg-surface hover:bg-surface-muted text-ink no-underline font-semibold text-[15px] box-border"
+              >Cancelar</a>
+              <button
+                type="button"
+                (click)="save()"
+                [disabled]="form.pristine || isSaving()"
+                class="inline-flex items-center h-12 px-[22px] rounded-xl border-0 bg-primary hover:bg-primary-hover text-white font-[inherit] font-semibold text-[15px] cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+              >{{ isSaving() ? 'Salvando…' : 'Salvar alterações' }}</button>
+            </div>
+          </div>
+        </section>
+      </div>
+    </main>
+  }
+</div>

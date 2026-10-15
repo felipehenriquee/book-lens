@@ -117,6 +117,7 @@ export class AddBookModalComponent {
       detected.readDate,
       detected.userNotes
     );
+    book.pageCount = detected.pageCount;
     this.saved.emit(book);
   }
 }

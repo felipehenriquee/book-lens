@@ -1,0 +1,85 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<title>Câmera · escanear livros</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&amp;family=Space+Grotesk:wght@500;600;700&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+a{color:#FFFFFF}a:hover{color:#DDE2FF}
+</style>
+</helmet>
+<div style="width:390px;height:844px;box-sizing:border-box;background:#0E0F12;color:#FFFFFF;font-family:'IBM Plex Sans',system-ui,sans-serif;display:flex;flex-direction:column;overflow:hidden">
+
+<div style="display:flex;align-items:center;justify-content:space-between;padding:20px 16px 12px">
+<a href="Main.dc.html" aria-label="Fechar" style="width:44px;height:44px;border-radius:50%;background:rgba(255,255,255,0.12);display:flex;align-items:center;justify-content:center"><svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"></path></svg></a>
+<span style="font-family:'Space Grotesk',sans-serif;font-size:17px;font-weight:600">Escanear livros</span>
+<button type="button" aria-label="Flash" style="width:44px;height:44px;border-radius:50%;border:0;background:rgba(255,255,255,0.12);display:flex;align-items:center;justify-content:center;cursor:pointer"><svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2 4 14h7l-1 8 9-12h-7z"></path></svg></button>
+</div>
+
+<div style="position:relative;flex:1;margin:0 12px;border-radius:24px;overflow:hidden;background:#2B2622;display:flex;flex-direction:column;justify-content:flex-end">
+<div style="position:absolute;top:14px;left:50%;transform:translateX(-50%);white-space:nowrap;padding:8px 14px;border-radius:999px;background:rgba(14,15,18,0.75);font-size:13px">Enquadre capas ou lombadas</div>
+<div style="display:flex;align-items:flex-end;justify-content:center;gap:14px;padding:0 18px 36px">
+<sc-for list="{{books}}" as="b" hint-placeholder-count="3">
+<div style="position:relative;flex:1 1 0;padding:6px;transform:rotate({{b.rot}})">
+<span style="position:absolute;top:0;left:0;width:16px;height:16px;border-top:3px solid #8C9BFF;border-left:3px solid #8C9BFF;border-radius:6px 0 0 0"></span>
+<span style="position:absolute;top:0;right:0;width:16px;height:16px;border-top:3px solid #8C9BFF;border-right:3px solid #8C9BFF;border-radius:0 6px 0 0"></span>
+<span style="position:absolute;bottom:0;left:0;width:16px;height:16px;border-bottom:3px solid #8C9BFF;border-left:3px solid #8C9BFF;border-radius:0 0 0 6px"></span>
+<span style="position:absolute;bottom:0;right:0;width:16px;height:16px;border-bottom:3px solid #8C9BFF;border-right:3px solid #8C9BFF;border-radius:0 0 6px 0"></span>
+<div style="aspect-ratio:2/3;border-radius:2px 5px 5px 2px;background:{{b.cover}};color:{{b.ink}};padding:8px 7px;box-sizing:border-box;display:flex;flex-direction:column;justify-content:space-between;box-shadow:inset 3px 0 0 rgba(0,0,0,0.15),0 10px 20px rgba(0,0,0,0.4)">
+<span style="font-family:'Space Grotesk',sans-serif;font-weight:700;font-size:13px;line-height:1.1">{{b.title}}</span>
+<span style="font-size:8px">{{b.author}}</span>
+</div>
+</div>
+</sc-for>
+</div>
+<div style="height:90px;background:#5A4535"></div>
+</div>
+
+<div style="padding:18px 16px 28px;display:flex;flex-direction:column;align-items:center;gap:18px">
+<div role="radiogroup" aria-label="Modo" style="display:flex;padding:4px;border-radius:999px;background:rgba(255,255,255,0.1)">
+<sc-for list="{{modes}}" as="m" hint-placeholder-count="2">
+<button type="button" role="radio" aria-checked="{{m.checked}}" onClick="{{m.pick}}" style="height:36px;min-width:96px;padding:0 14px;border:0;border-radius:999px;font:inherit;font-size:13px;font-weight:600;cursor:pointer;{{m.style}}">{{m.label}}</button>
+</sc-for>
+</div>
+<div style="width:100%;display:flex;align-items:center;justify-content:space-between">
+<button type="button" aria-label="Escolher da galeria" style="width:52px;height:52px;border-radius:12px;border:2px solid rgba(255,255,255,0.4);background:#B5532A;cursor:pointer"></button>
+<button type="button" aria-label="Tirar foto" style="width:80px;height:80px;border-radius:50%;border:4px solid #FFFFFF;background:transparent;padding:5px;cursor:pointer"><span style="display:block;width:100%;height:100%;border-radius:50%;background:#FFFFFF"></span></button>
+<a href="Resultados.dc.html" aria-label="Revisar 3 livros detectados" style="height:52px;padding:0 14px;border-radius:999px;background:#3A4FD9;display:flex;align-items:center;gap:6px;text-decoration:none;font-size:14px;font-weight:600"><span style="font-family:'Space Grotesk',sans-serif;font-size:17px">3</span>livros
+<svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"></path></svg></a>
+</div>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.state = { mode: 'capas' };
+  }
+  renderVals() {
+    var self = this;
+    var books = [
+      { title: 'Dom Casmurro', author: 'Machado de Assis', cover: '#2B3A2F', ink: '#F1E9D2', rot: '-3deg' },
+      { title: 'Torto Arado', author: 'Itamar Vieira Junior', cover: '#B5532A', ink: '#FFFFFF', rot: '2deg' },
+      { title: 'Sapiens', author: 'Yuval Noah Harari', cover: '#E6DFCC', ink: '#1C1C1C', rot: '-1deg' }
+    ];
+    var modes = [['capas', 'Capas'], ['lombadas', 'Lombadas']].map(function (m) {
+      var on = self.state.mode === m[0];
+      return {
+        label: m[1], checked: on ? 'true' : 'false',
+        style: on ? 'background:#FFFFFF;color:#15171C' : 'background:transparent;color:#FFFFFF',
+        pick: function () { self.setState({ mode: m[0] }); }
+      };
+    });
+    return { books: books, modes: modes };
+  }
+}
+</script>
+</body>
+</html>

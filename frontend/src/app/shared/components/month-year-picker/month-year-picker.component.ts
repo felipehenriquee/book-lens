@@ -1,7 +1,5 @@
 import { Component, forwardRef, inject, signal } from '@angular/core';
 import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
-import { MatFormFieldModule } from '@angular/material/form-field';
-import { MatSelectModule } from '@angular/material/select';
 import { AuthService } from '../../../core/services/auth.service';
 
 // Usado quando o token não traz a data de aniversário do usuário (ex.: tokens
@@ -38,7 +36,6 @@ function buildYearRange(minYear: number): number[] {
 @Component({
   selector: 'app-month-year-picker',
   standalone: true,
-  imports: [MatFormFieldModule, MatSelectModule],
   templateUrl: './month-year-picker.component.html',
   providers: [
     {

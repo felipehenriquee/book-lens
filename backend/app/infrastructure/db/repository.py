@@ -80,6 +80,9 @@ class SQLAlchemyBookRepository(BookRepositoryInterface):
                 paid_price=book.paid_price,
                 read_date=book.read_date,
                 user_notes=book.user_notes,
+                gifted_by=book.gifted_by,
+                current_page=book.current_page,
+                page_count=book.page_count,
                 user_id=str(user_id),
             )
             for book in books

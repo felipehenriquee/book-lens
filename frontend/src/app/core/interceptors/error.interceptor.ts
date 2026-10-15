@@ -29,7 +29,7 @@ export const errorInterceptor: HttpInterceptorFn = (req, next) => {
           notificationService.error(detail ?? 'Arquivo inválido para upload.');
           break;
         case 429:
-          notificationService.error('Muitas requisições. Aguarde um instante e tente novamente.');
+          notificationService.error(detail ?? 'Muitas requisições. Aguarde um instante e tente novamente.');
           break;
         case 0:
           notificationService.error('Não foi possível conectar ao servidor.');

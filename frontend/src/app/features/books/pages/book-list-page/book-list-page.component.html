@@ -1,110 +1,209 @@
-<div class="flex items-center justify-between mb-6">
-  <h1 class="text-2xl font-bold text-gray-900">Minha Coleção</h1>
-  <div class="flex gap-2">
-    <button mat-stroked-button (click)="openAddModal()">
-      <mat-icon class="align-middle mr-1">add</mat-icon>
-      Adicionar livro
-    </button>
-    <button mat-flat-button color="primary" class="btn-primary" (click)="openScanModal()">
-      <mat-icon class="align-middle mr-1">photo_camera</mat-icon>
-      Escanear livros
-    </button>
+<div class="flex flex-col gap-8">
+  <!-- Título + ordenação -->
+  <div class="flex flex-wrap items-end justify-between gap-4">
+    <div>
+      <p class="m-0 mb-2 text-xs font-semibold tracking-[0.1em] uppercase text-muted">Sua coleção</p>
+      <h1 class="m-0 font-display text-[40px] sm:text-[46px] leading-[1.05] tracking-[-0.03em] font-bold">Minha biblioteca</h1>
+    </div>
+    <div class="flex items-center gap-2.5">
+      <label for="ordem" class="text-sm text-muted">Ordenar por</label>
+      <select
+        id="ordem"
+        [value]="sortBy()"
+        (change)="setSort($any($event.target).value)"
+        class="h-11 border border-solid border-line-input rounded-[10px] bg-surface px-3 font-[inherit] text-sm text-ink cursor-pointer"
+      >
+        <option value="recent">Adicionados recentemente</option>
+        <option value="title-asc">Título (A–Z)</option>
+        <option value="title-desc">Título (Z–A)</option>
+        <option value="author">Autor</option>
+        <option value="rating-desc">Maior avaliação</option>
+        <option value="rating-asc">Menor avaliação</option>
+        <option value="price-desc">Maior preço</option>
+        <option value="price-asc">Menor preço</option>
+      </select>
+    </div>
   </div>
+
+  <!-- Contadores -->
+  <div class="grid gap-3 sm:gap-4 grid-cols-2 sm:grid-cols-[repeat(auto-fit,minmax(200px,1fr))]">
+    @for (stat of stats(); track stat.label) {
+      <div class="bg-surface border border-solid border-line rounded-[14px] p-5 flex flex-col gap-2.5">
+        <span class="text-[13px] text-muted font-medium">{{ stat.label }}</span>
+        <span class="font-display text-4xl leading-none font-bold tracking-[-0.02em]">{{ stat.value }}</span>
+        <div class="h-1.5 rounded-[3px] bg-track overflow-hidden">
+          <div class="h-full rounded-[3px] transition-[width] duration-500" [style.width]="stat.pct" [style.background]="stat.color"></div>
+        </div>
+      </div>
+    }
+  </div>
+
+  <!-- Continue lendo + chamada para o scan -->
+  <div class="flex flex-wrap gap-4">
+    @if (currentlyReading(); as book) {
+      <section aria-labelledby="continue" class="flex-[2_1_520px] bg-surface border border-solid border-line rounded-2xl p-6 flex flex-wrap items-center gap-6 box-border">
+        <a [routerLink]="['/app/books', book.id]" class="w-[104px] flex-none no-underline">
+          <app-book-cover [title]="book.title" [author]="book.author" [coverUrl]="book.coverUrl"></app-book-cover>
+        </a>
+        <div class="flex-[1_1_280px] flex flex-col gap-3">
+          <h2 id="continue" class="m-0 text-xs font-semibold tracking-[0.1em] uppercase text-muted">Continue lendo</h2>
+          <div>
+            <p class="m-0 font-display text-[26px] font-bold tracking-[-0.02em]">{{ book.title }}</p>
+            <p class="m-0 mt-1 text-sm text-muted">
+              {{ book.author }}@if (book.publisher) { · {{ book.publisher }} }
+            </p>
+          </div>
+          @if (book.pageCount) {
+            <div class="flex flex-col gap-1.5">
+              <div class="flex justify-between text-[13px] text-ink-2">
+                <span>Página {{ book.currentPage ?? 0 }} de {{ book.pageCount }}</span>
+                <span class="font-semibold text-ink">{{ readingProgress(book) }}%</span>
+              </div>
+              <div class="h-2 rounded bg-track overflow-hidden">
+                <div class="h-full rounded bg-primary transition-[width] duration-500" [style.width.%]="readingProgress(book)"></div>
+              </div>
+            </div>
+          }
+          <div class="flex flex-wrap gap-2">
+            <a
+              [routerLink]="['/app/books', book.id]"
+              class="inline-flex items-center h-11 px-4 rounded-[10px] border border-solid border-line-input bg-surface hover:bg-surface-muted text-sm font-semibold text-ink no-underline box-border"
+            >{{ book.pageCount ? 'Atualizar página' : 'Ver detalhes' }}</a>
+            <button
+              type="button"
+              (click)="markAsRead(book)"
+              [disabled]="isMarkingRead()"
+              class="h-11 px-4 rounded-[10px] border-0 bg-[#E3F3EA] hover:bg-[#D3EDDE] font-[inherit] text-sm font-semibold text-[#17603C] cursor-pointer disabled:opacity-60 disabled:cursor-wait"
+            >Marcar como lido</button>
+          </div>
+        </div>
+      </section>
+    }
+
+    <section aria-labelledby="promo" class="flex-[1_1_320px] bg-ink text-white rounded-2xl p-7 flex flex-col justify-between gap-5 box-border">
+      <span class="w-12 h-12 rounded-xl bg-primary flex items-center justify-center">
+        <svg aria-hidden="true" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8V6a2 2 0 0 1 2-2h2M16 4h2a2 2 0 0 1 2 2v2M20 16v2a2 2 0 0 1-2 2h-2M8 20H6a2 2 0 0 1-2-2v-2"></path><path d="M9 8v8M12 8v8M15 8v8"></path></svg>
+      </span>
+      <div>
+        <h2 id="promo" class="m-0 mb-2 font-display text-2xl leading-[1.15] tracking-[-0.02em]">Cadastre vários livros com uma foto</h2>
+        <p class="m-0 text-sm leading-[1.55] text-[#C9CCD3]">Fotografe capas ou lombadas. Identificamos cada título e buscamos autor, editora e resumo no Google Books.</p>
+      </div>
+      <a
+        routerLink="/app/escanear"
+        class="self-start inline-flex items-center gap-2 h-11 px-[18px] rounded-[10px] bg-white hover:bg-[#E9E9E4] text-ink no-underline font-semibold text-sm box-border"
+      >
+        Escanear agora
+        <svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#15171C" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"></path></svg>
+      </a>
+    </section>
+  </div>
+
+  <!-- Todos os livros -->
+  <section aria-labelledby="todos" class="flex flex-col gap-5">
+    <div class="flex flex-wrap justify-between items-center gap-3">
+      <h2 id="todos" class="m-0 font-display text-[26px] tracking-[-0.02em]">Todos os livros</h2>
+      <div class="flex flex-wrap gap-2">
+        @for (chip of statusChips(); track chip.value) {
+          <button
+            type="button"
+            (click)="statusFilter.set(chip.value)"
+            [attr.aria-pressed]="statusFilter() === chip.value"
+            class="h-11 px-4 rounded-full border border-solid font-[inherit] text-sm font-medium cursor-pointer inline-flex items-center gap-2"
+            [class]="statusFilter() === chip.value ? 'bg-ink text-white border-ink' : 'bg-surface text-ink border-line-input hover:bg-surface-muted'"
+          >
+            {{ chip.label }}<span class="text-xs opacity-75">{{ chip.count }}</span>
+          </button>
+        }
+        <button
+          type="button"
+          (click)="showMoreFilters.set(!showMoreFilters())"
+          [attr.aria-expanded]="showMoreFilters()"
+          class="h-11 px-4 rounded-full border border-dashed border-line-input bg-transparent font-[inherit] text-sm font-medium text-ink-2 cursor-pointer inline-flex items-center gap-2 hover:bg-surface-muted"
+        >
+          Mais filtros
+          @if (activeExtraFilters() > 0) {
+            <span class="text-xs font-semibold px-2 py-0.5 rounded-full bg-primary-soft text-primary-hover">{{ activeExtraFilters() }}</span>
+          }
+        </button>
+      </div>
+    </div>
+
+    @if (showMoreFilters()) {
+      <div class="flex flex-wrap gap-4 bg-surface border border-solid border-line rounded-[14px] p-4">
+        <label class="flex flex-col gap-1.5 text-xs font-semibold tracking-[0.1em] uppercase text-muted">
+          Formato
+          <select [value]="formatFilter()" (change)="formatFilter.set($any($event.target).value)" class="filter-select">
+            <option value="ALL">Todos</option>
+            @for (option of formatOptions; track option) {
+              <option [value]="option">{{ option | bookFormat }}</option>
+            }
+          </select>
+        </label>
+        <label class="flex flex-col gap-1.5 text-xs font-semibold tracking-[0.1em] uppercase text-muted">
+          Avaliação
+          <select [value]="ratedFilter()" (change)="ratedFilter.set($any($event.target).value)" class="filter-select">
+            <option value="ALL">Todos</option>
+            <option value="RATED">Avaliados</option>
+            <option value="UNRATED">Não avaliados</option>
+          </select>
+        </label>
+        @if (readYears().length > 0) {
+          <label class="flex flex-col gap-1.5 text-xs font-semibold tracking-[0.1em] uppercase text-muted">
+            Ano de leitura
+            <select [value]="readYearFilter()" (change)="readYearFilter.set($any($event.target).value)" class="filter-select">
+              <option value="ALL">Todos</option>
+              @for (year of readYears(); track year) {
+                <option [value]="year">{{ year }}</option>
+              }
+            </select>
+          </label>
+        }
+        @if (purchaseYears().length > 0) {
+          <label class="flex flex-col gap-1.5 text-xs font-semibold tracking-[0.1em] uppercase text-muted">
+            Ano de compra
+            <select [value]="purchaseYearFilter()" (change)="purchaseYearFilter.set($any($event.target).value)" class="filter-select">
+              <option value="ALL">Todos</option>
+              @for (year of purchaseYears(); track year) {
+                <option [value]="year">{{ year }}</option>
+              }
+            </select>
+          </label>
+        }
+      </div>
+    }
+
+    @if (isLoading()) {
+      <div class="flex justify-center py-12">
+        <mat-spinner diameter="32"></mat-spinner>
+      </div>
+    } @else if (books().length === 0) {
+      <div class="bg-surface border border-solid border-line rounded-2xl py-14 px-6 text-center flex flex-col items-center gap-3">
+        <p class="m-0 font-display text-xl font-bold tracking-[-0.02em]">Sua estante está vazia</p>
+        <p class="m-0 text-sm text-muted max-w-[420px]">Escaneie uma foto da sua estante ou adicione um livro manualmente para começar.</p>
+        <a
+          routerLink="/app/escanear"
+          class="mt-2 inline-flex items-center h-11 px-[18px] rounded-[10px] bg-primary hover:bg-primary-hover text-white no-underline font-semibold text-sm box-border"
+        >Escanear livros</a>
+      </div>
+    } @else if (visibleBooks().length === 0) {
+      <div class="bg-surface border border-solid border-line rounded-2xl py-12 px-6 text-center flex flex-col items-center gap-3">
+        <p class="m-0 text-sm text-muted">Nenhum livro encontrado com esses filtros.</p>
+        <button
+          type="button"
+          (click)="clearFilters()"
+          class="h-11 px-4 rounded-[10px] border border-solid border-line-input bg-surface hover:bg-surface-muted font-[inherit] text-sm font-semibold text-ink cursor-pointer"
+        >Limpar filtros</button>
+      </div>
+    } @else {
+      <div class="grid gap-x-6 gap-y-8 grid-cols-[repeat(auto-fill,minmax(150px,1fr))] sm:grid-cols-[repeat(auto-fill,minmax(184px,1fr))]">
+        @for (book of visibleBooks(); track book.id) {
+          <app-book-card [book]="book"></app-book-card>
+        }
+      </div>
+    }
+  </section>
 </div>
 
-@if (books().length > 0) {
-  <div class="flex flex-wrap gap-3 mb-4">
-    <mat-form-field appearance="outline" class="!w-48">
-      <mat-label>Ordenar por</mat-label>
-      <mat-select [value]="sortBy()" (selectionChange)="sortBy.set($event.value)">
-        <mat-option value="title-asc">Alfabética (A-Z)</mat-option>
-        <mat-option value="title-desc">Alfabética (Z-A)</mat-option>
-        <mat-option value="rating-desc">Maior avaliação</mat-option>
-        <mat-option value="rating-asc">Menor avaliação</mat-option>
-        <mat-option value="price-desc">Maior preço</mat-option>
-        <mat-option value="price-asc">Menor preço</mat-option>
-      </mat-select>
-    </mat-form-field>
-
-    <mat-form-field appearance="outline" class="!w-40">
-      <mat-label>Status de leitura</mat-label>
-      <mat-select [value]="statusFilter()" (selectionChange)="statusFilter.set($event.value)">
-        <mat-option value="ALL">Todos</mat-option>
-        @for (option of statusOptions; track option) {
-          <mat-option [value]="option">{{ option | readingStatus }}</mat-option>
-        }
-      </mat-select>
-    </mat-form-field>
-
-    <mat-form-field appearance="outline" class="!w-40">
-      <mat-label>Tipo de capa</mat-label>
-      <mat-select [value]="formatFilter()" (selectionChange)="formatFilter.set($event.value)">
-        <mat-option value="ALL">Todos</mat-option>
-        @for (option of formatOptions; track option) {
-          <mat-option [value]="option">{{ option | bookFormat }}</mat-option>
-        }
-      </mat-select>
-    </mat-form-field>
-
-    <mat-form-field appearance="outline" class="!w-36">
-      <mat-label>Avaliação</mat-label>
-      <mat-select [value]="ratedFilter()" (selectionChange)="ratedFilter.set($event.value)">
-        <mat-option value="ALL">Todos</mat-option>
-        <mat-option value="RATED">Avaliados</mat-option>
-        <mat-option value="UNRATED">Não avaliados</mat-option>
-      </mat-select>
-    </mat-form-field>
-
-    @if (readYears().length > 0) {
-      <mat-form-field appearance="outline" class="!w-36">
-        <mat-label>Ano de leitura</mat-label>
-        <mat-select [value]="readYearFilter()" (selectionChange)="readYearFilter.set($event.value)">
-          <mat-option value="ALL">Todos</mat-option>
-          @for (year of readYears(); track year) {
-            <mat-option [value]="year">{{ year }}</mat-option>
-          }
-        </mat-select>
-      </mat-form-field>
-    }
-
-    @if (purchaseYears().length > 0) {
-      <mat-form-field appearance="outline" class="!w-36">
-        <mat-label>Ano de compra</mat-label>
-        <mat-select [value]="purchaseYearFilter()" (selectionChange)="purchaseYearFilter.set($event.value)">
-          <mat-option value="ALL">Todos</mat-option>
-          @for (year of purchaseYears(); track year) {
-            <mat-option [value]="year">{{ year }}</mat-option>
-          }
-        </mat-select>
-      </mat-form-field>
-    }
-  </div>
-}
-
-@if (isLoading()) {
-  <div class="flex justify-center py-12">
-    <mat-spinner diameter="32"></mat-spinner>
-  </div>
-} @else if (books().length === 0) {
-  <div class="card-surface text-center text-gray-500 py-12">
-    Sua coleção está vazia. Escaneie a estante ou adicione um livro manualmente para começar!
-  </div>
-} @else if (visibleBooks().length === 0) {
-  <div class="card-surface text-center text-gray-500 py-12">
-    Nenhum livro encontrado com esses filtros.
-  </div>
-} @else {
-  <div class="grid gap-4 grid-cols-[repeat(auto-fill,minmax(320px,1fr))]">
-    @for (book of visibleBooks(); track book.id) {
-      <app-book-card [book]="book" (deleteRequested)="onDeleteRequested($event)"></app-book-card>
-    }
-  </div>
-}
-
-@if (isScanModalOpen()) {
-  <app-scan-dialog (closed)="onScanClosed()" (saved)="onScanSaved($event)"></app-scan-dialog>
-}
-
-@if (isAddModalOpen()) {
+@if (libraryUi.isAddModalOpen()) {
   <app-add-book-modal (closed)="onAddClosed()" (saved)="onAddSaved($event)"></app-add-book-modal>
 }

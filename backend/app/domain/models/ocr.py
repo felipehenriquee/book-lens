@@ -1,4 +1,4 @@
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator
 
 
 class DetectedBook(BaseModel):
@@ -15,6 +15,25 @@ class DetectedBook(BaseModel):
         ...,
         description="Título simplificado e limpo sem subtítulos ou pontuações, otimizado para busca de texto.",
     )
+    box_2d: list[int] = Field(
+        default_factory=list,
+        description=(
+            "Caixa delimitadora do livro na imagem no formato [ymin, xmin, ymax, xmax], "
+            "com coordenadas normalizadas de 0 a 1000."
+        ),
+    )
+
+    @field_validator("box_2d")
+    @classmethod
+    def _sanitize_box(cls, value: list[int]) -> list[int]:
+        """A Gemini às vezes devolve coordenadas negativas ou invertidas: limita a
+        0–1000 e descarta caixas impossíveis (o front então só não desenha a moldura)."""
+        if len(value) != 4:
+            return []
+        ymin, xmin, ymax, xmax = (min(max(int(v), 0), 1000) for v in value)
+        if ymin >= ymax or xmin >= xmax:
+            return []
+        return [ymin, xmin, ymax, xmax]
 
 
 class BookScanResult(BaseModel):
@@ -40,6 +59,7 @@ class EnrichedDetectedBook(DetectedBook):
     categories: list[str] = Field(default_factory=list, description="Categorias/gêneros")
     average_rating: float | None = Field(default=None, description="Nota média no Google Books")
     isbn_13: str | None = Field(default=None, description="ISBN-13, se disponível")
+    language: str | None = Field(default=None, description="Idioma (código ISO 639-1, ex.: 'pt')")
     list_price_amount: float | None = Field(default=None, description="Preço de tabela no Google Books")
     list_price_currency: str | None = Field(default=None, description="Moeda do preço de tabela")
 

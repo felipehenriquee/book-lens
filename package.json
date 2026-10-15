@@ -1,0 +1,16 @@
+{
+  "name": "booklens",
+  "private": true,
+  "scripts": {
+    "dev": "npm run db && npm run migrate && concurrently -k -n api,web -c blue,magenta \"npm:api\" \"npm:web\"",
+    "db": "bash scripts/db.sh",
+    "db:stop": "docker stop booklens-db",
+    "migrate": "cd backend && .venv/bin/alembic upgrade head",
+    "api": "cd backend && .venv/bin/uvicorn main:app --reload --port 8001",
+    "web": "cd frontend && npm start",
+    "setup": "npm install && cd frontend && npm install && cd ../backend && python3 -m venv .venv && .venv/bin/pip install -r requirements.txt"
+  },
+  "devDependencies": {
+    "concurrently": "^9.1.2"
+  }
+}
