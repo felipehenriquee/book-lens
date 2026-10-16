@@ -56,12 +56,3 @@ export class DetectedBook {
     return book;
   }
 }
-
-export class BookScanResult {
-  constructor(public detectedBooks: DetectedBook[]) {}
-
-  static fromJson(json: any): BookScanResult {
-    const books = (json.detected_books || []).map((b: any) => DetectedBook.fromJson(b));
-    return new BookScanResult(books);
-  }
-}

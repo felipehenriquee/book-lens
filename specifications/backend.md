@@ -1,6 +1,6 @@
 1. Visão Geral do ProjetoDesenvolvimento de uma API RESTful em Python (FastAPI) com arquitetura limpa (Clean Architecture) para catalogação de livros. O diferencial da aplicação é o endpoint multimodal de OCR que recebe fotos enviadas pelo frontend (Angular) contendo um ou múltiplos livros, processa a imagem utilizando a Gemini API (google-genai), extrai os metadados estruturados (título, autor, editora) em formato JSON e permite a persistência no banco de dados.  
 
-2. Stack TecnológicaLinguagem: Python 3.11+  Framework Web: FastAPI (Assíncrono)  Validação de Dados: Pydantic v2  Integração com IA: google-genai (SDK Oficial da Google)  Banco de Dados & ORM: PostgreSQL + SQLAlchemy 2.0 (Driver Assíncrono) / Alembic para Migrações  Autenticação e Segurança: python-jose (JWT), passlib[bcrypt] (Hashing) e slowapi (Rate Limiting)  Cliente HTTP: httpx (para consumo de APIs externas de apoio, ex: Google Books)  
+2. Stack TecnológicaLinguagem: Python 3.11+  Framework Web: FastAPI (Assíncrono)  Validação de Dados: Pydantic v2  Integração com IA: google-genai (SDK Oficial da Google)  Banco de Dados & ORM: PostgreSQL + SQLAlchemy 2.0 (Driver Assíncrono) / Alembic para Migrações  Autenticação e Segurança: python-jose (JWT), passlib[bcrypt] (Hashing) e slowapi (Rate Limiting)  Cliente HTTP: httpx (para consumo de APIs externas de apoio, ex: Google Books)  Fila de processamento: Celery (workers) + RabbitMQ (broker) + Redis (notificações em tempo real, rate limits) — ver docs/arquitetura-fila.md  
 
 3. Estrutura do Projeto (Clean Architecture)A aplicação deve seguir rigorosamente a separação de responsabilidades em camadas:  
 src/
@@ -59,6 +59,7 @@ src/
 3. **Proteção contra Abuso (Rate Limiting):** A rota de upload da imagem (`/api/v1/ocr/scan`) deve ter um limite de requisições configurado (ex: máximo **10 chamadas/minuto por usuário**) para proteger o uso da quota da Gemini API[cite: 3].
 4. **CORS Restrito:** A API só deve aceitar requisições originadas do domínio do frontend Angular (ex: `http://localhost:4200` em desenvolvimento)[cite: 3].
 5. **Validação de Arquivos:** Aceitar exclusivamente imagens nos formatos `image/jpeg`, `image/png` e `image/webp` com tamanho máximo de **10MB**[cite: 3]. O processamento do arquivo deve ser feito em memória (`io.BytesIO`) sem salvar o arquivo fisicamente no disco do servidor[cite: 3].
+   - **Exceção — fila de scans (`/api/v1/scans`):** para processar várias fotos em background, cada foto fica temporariamente no storage (`StorageInterface`, hoje disco local em `storage/scans/`). A foto é normalizada no upload (rotação EXIF aplicada, metadados/GPS descartados, máx. 2048px, JPEG); a versão enviada à Gemini é **apagada assim que o processamento termina com sucesso** (fica só em caso de falha, para permitir "tentar de novo"). Resta apenas uma miniatura (máx. 1024px) para a tela de revisão, removida junto com o job — quando o usuário o apaga ou, automaticamente, após `SCAN_JOB_RETENTION_DAYS` (7 dias).
 
 ---
 

@@ -1,9 +1,16 @@
+import asyncio
 import re
+
 import httpx
 from app.core.config import settings
 from app.domain.models.ocr import EnrichedDetectedBook
 
 _GOOGLE_BOOKS_API_URL = "https://www.googleapis.com/books/v1/volumes"
+
+# A API do Google Books responde 503 com frequência (instabilidade do lado deles);
+# a mesma busca costuma passar numa segunda ou terceira tentativa.
+_SEARCH_ATTEMPTS = 3
+_SEARCH_RETRY_DELAY_SECONDS = 0.6
 
 _USER_AGENT = (
     "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
@@ -66,9 +73,17 @@ class GoogleBooksClient:
     """Cliente para busca opcional de metadados adicionais de livros."""
 
     async def search_books(self, query: str, max_results: int = 5) -> list[dict]:
-        """Busca múltiplos resultados por título, para uso em autocomplete."""
+        """Busca múltiplos resultados, para autocomplete e correção manual do scan.
+
+        Tenta primeiro só no título (resultados mais precisos); se nada vier
+        (o usuário digitou título + autor, ou o filtro intitle: falhou, o que
+        acontece com frequência na API do Google), busca o texto livre.
+        """
+        return await self._search(f"intitle:{query}", max_results) or await self._search(query, max_results)
+
+    async def _search(self, q: str, max_results: int) -> list[dict]:
         params: dict[str, str] = {
-            "q": f"intitle:{query}",
+            "q": q,
             "maxResults": str(max_results),
             "printType": "books",
             "orderBy": "relevance",
@@ -77,15 +92,20 @@ class GoogleBooksClient:
             params["key"] = settings.GOOGLE_BOOKS_API_KEY
 
         async with httpx.AsyncClient(timeout=10.0, headers={"User-Agent": _USER_AGENT}) as client:
-            try:
-                response = await client.get(_GOOGLE_BOOKS_API_URL, params=params)
-                response.raise_for_status()
-            except httpx.HTTPError as err:
-                print(f"Erro na requisição ao Google Books: {_safe_error(err)}")
-                return []
-
-        data = response.json()
-        return data.get("items", [])
+            for attempt in range(1, _SEARCH_ATTEMPTS + 1):
+                try:
+                    response = await client.get(_GOOGLE_BOOKS_API_URL, params=params)
+                    response.raise_for_status()
+                    return response.json().get("items", [])
+                except httpx.HTTPStatusError as err:
+                    if err.response.status_code < 500 or attempt == _SEARCH_ATTEMPTS:
+                        print(f"Erro na requisição ao Google Books: {_safe_error(err)}")
+                        return []
+                    await asyncio.sleep(_SEARCH_RETRY_DELAY_SECONDS * attempt)
+                except httpx.HTTPError as err:
+                    print(f"Erro na requisição ao Google Books: {_safe_error(err)}")
+                    return []
+        return []
 
     async def get_by_id(self, volume_id: str) -> dict | None:
         """Busca um volume específico direto pelo ID, sem precisar buscar por título de novo."""

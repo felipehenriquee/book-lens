@@ -4,7 +4,7 @@ import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { BaseHttpService } from '../../../core/services/base-http.service';
 import { Book } from '../models/book.model';
-import { BookScanResult, DetectedBook } from '../models/ocr-scan.model';
+import { DetectedBook } from '../models/ocr-scan.model';
 import { environment } from '../../../../environments/environment';
 
 @Injectable({
@@ -15,17 +15,6 @@ export class BookService extends BaseHttpService<Book> {
 
   constructor(http: HttpClient) {
     super(http, Book.fromJson);
-  }
-
-  /**
-   * Sends image file/blob to backend Gemini OCR endpoint
-   */
-  scanBooksImage(file: File): Observable<BookScanResult> {
-    const formData = new FormData();
-    formData.append('file', file, file.name);
-    return this.http
-      .post<any>(`${environment.apiUrl}/ocr/scan`, formData)
-      .pipe(map((response) => BookScanResult.fromJson(response)));
   }
 
   /**

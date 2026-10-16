@@ -2,12 +2,15 @@
   "name": "booklens",
   "private": true,
   "scripts": {
-    "dev": "npm run db && npm run migrate && concurrently -k -n api,web -c blue,magenta \"npm:api\" \"npm:web\"",
-    "db": "bash scripts/db.sh",
-    "db:stop": "docker stop booklens-db",
+    "dev": "npm run infra && npm run migrate && concurrently -k -n api,worker,web -c blue,yellow,magenta \"npm:api\" \"npm:worker\" \"npm:web\"",
+    "dev:lan": "npm run infra && npm run migrate && concurrently -k -n api,worker,web -c blue,yellow,magenta \"npm:api\" \"npm:worker\" \"npm:web:lan\"",
+    "infra": "bash scripts/infra.sh",
+    "infra:stop": "docker stop booklens-db booklens-redis booklens-rabbitmq",
     "migrate": "cd backend && .venv/bin/alembic upgrade head",
-    "api": "cd backend && .venv/bin/uvicorn main:app --reload --port 8001",
-    "web": "cd frontend && npm start",
+    "api": "cd backend && .venv/bin/uvicorn main:app --reload --port 8001 --timeout-graceful-shutdown 3",
+    "worker": "cd backend && .venv/bin/watchfiles --filter python '.venv/bin/celery -A app.worker.celery_app worker -B --loglevel=INFO' app",
+    "web": "cd frontend && npm start --server",
+    "web:lan": "cd frontend && npx ng serve --host 0.0.0.0",
     "setup": "npm install && cd frontend && npm install && cd ../backend && python3 -m venv .venv && .venv/bin/pip install -r requirements.txt"
   },
   "devDependencies": {

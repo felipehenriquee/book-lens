@@ -12,4 +12,5 @@ COPY . .
 
 EXPOSE 8000
 
-CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"]
+# Conexões SSE nunca terminam sozinhas: sem limite, o desligamento ficaria esperando por elas.
+CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000", "--timeout-graceful-shutdown", "3"]

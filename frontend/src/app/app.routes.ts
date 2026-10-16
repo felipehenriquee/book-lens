@@ -18,12 +18,14 @@ export const routes: Routes = [
       },
     ],
   },
-  // Fluxo de scan: tela cheia com header próprio (etapas), fora do MainLayout.
+  // Revisão de um scan: tela cheia com header próprio (etapas), fora do MainLayout.
   {
-    path: 'app/escanear',
+    path: 'app/escanear/:id',
     canActivate: [authGuard],
     loadComponent: () =>
-      import('./features/books/pages/scan-page/scan-page.component').then((m) => m.ScanPageComponent),
+      import('./features/scans/pages/scan-review-page/scan-review-page.component').then(
+        (m) => m.ScanReviewPageComponent
+      ),
   },
   // Detalhe do livro: também tem header próprio (breadcrumb), fora do MainLayout.
   {
@@ -44,6 +46,11 @@ export const routes: Routes = [
       {
         path: 'books',
         loadChildren: () => import('./features/books/books.routes').then((m) => m.BOOKS_ROUTES),
+      },
+      {
+        path: 'escanear',
+        loadComponent: () =>
+          import('./features/scans/pages/scans-page/scans-page.component').then((m) => m.ScansPageComponent),
       },
     ],
   },

@@ -2,6 +2,7 @@ import { Component, inject } from '@angular/core';
 import { Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 import { AuthService } from '../../services/auth.service';
 import { LibraryUiService } from '../../../features/books/services/library-ui.service';
+import { ScanJobsStore } from '../../../features/scans/services/scan-jobs.store';
 
 const LIBRARY_URL = '/app/books';
 
@@ -15,6 +16,7 @@ export class MainLayoutComponent {
   private readonly authService = inject(AuthService);
   private readonly router = inject(Router);
   readonly libraryUi = inject(LibraryUiService);
+  readonly scanJobs = inject(ScanJobsStore);
 
   onSearch(value: string): void {
     this.libraryUi.search.set(value);

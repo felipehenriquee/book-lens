@@ -1,21 +1,23 @@
-import { Component, OnDestroy, computed, inject, signal } from '@angular/core';
-import { HttpErrorResponse } from '@angular/common/http';
-import { Router, RouterLink } from '@angular/router';
-import { finalize } from 'rxjs';
-import { environment } from '../../../../../environments/environment';
-import { BookService } from '../../services/book.service';
+import { Component, OnDestroy, OnInit, computed, inject, signal } from '@angular/core';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
+import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
+import { finalize, switchMap } from 'rxjs';
+import { BookService } from '../../../books/services/book.service';
 import { NotificationService } from '../../../../core/services/notification.service';
-import { Book } from '../../models/book.model';
-import { DetectedBook } from '../../models/ocr-scan.model';
+import { Book } from '../../../books/models/book.model';
+import { DetectedBook } from '../../../books/models/ocr-scan.model';
 import { BookCoverComponent } from '../../../../shared/components/book-cover/book-cover.component';
 import { StepIndicatorComponent } from '../../../../shared/components/step-indicator/step-indicator.component';
-import { BookPreviewDialogComponent } from '../../components/book-preview-dialog/book-preview-dialog.component';
+import { BookPreviewDialogComponent } from '../../../books/components/book-preview-dialog/book-preview-dialog.component';
+import { BookSearchComponent } from '../../../books/components/book-search/book-search.component';
+import { ScanJob } from '../../models/scan-job.model';
+import { ScanJobService } from '../../services/scan-job.service';
+import { ScanJobsStore } from '../../services/scan-jobs.store';
 
 /** Abaixo disso a detecção pede confirmação da edição (DESIGN.md). */
 const LOW_CONFIDENCE = 0.8;
 
 type Step = 'photo' | 'review';
-type ScanStatus = 'idle' | 'scanning' | 'done' | 'error';
 
 interface ScanItem {
   book: DetectedBook;
@@ -25,49 +27,44 @@ interface ScanItem {
    * Books), carregadas só para detecções de baixa confiança.
    */
   editions: DetectedBook[];
+  /** O usuário trocou o livro pela busca manual ("Não é este livro?"). */
+  chosenByUser?: boolean;
 }
 
-interface Tip {
-  title: string;
-  text: string;
-  icon: string;
-}
-
+/** Revisão de um scan concluído: foto com as molduras → seleção → adicionar à biblioteca. */
 @Component({
-  selector: 'app-scan-page',
+  selector: 'app-scan-review-page',
   standalone: true,
-  imports: [RouterLink, BookCoverComponent, StepIndicatorComponent, BookPreviewDialogComponent],
-  templateUrl: './scan-page.component.html',
-  styles: [
-    `
-      @keyframes scan-sweep {
-        0% { top: 0; }
-        100% { top: 100%; }
-      }
-      .scan-line {
-        animation: scan-sweep 1.8s ease-in-out infinite alternate;
-      }
-    `,
+  imports: [
+    RouterLink,
+    MatProgressSpinnerModule,
+    BookCoverComponent,
+    StepIndicatorComponent,
+    BookPreviewDialogComponent,
+    BookSearchComponent,
   ],
+  templateUrl: './scan-review-page.component.html',
 })
-export class ScanPageComponent implements OnDestroy {
-  private readonly bookService = inject(BookService);
-  private readonly notificationService = inject(NotificationService);
+export class ScanReviewPageComponent implements OnInit, OnDestroy {
+  private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
+  private readonly bookService = inject(BookService);
+  private readonly scanJobService = inject(ScanJobService);
+  private readonly store = inject(ScanJobsStore);
+  private readonly notificationService = inject(NotificationService);
 
   readonly steps = ['Foto', 'Revisar', 'Completar'];
-  readonly acceptedTypes = environment.allowedImageTypes.join(',');
-  readonly maxFileSizeMB = environment.maxFileSizeMB;
 
+  readonly isLoading = signal(true);
+  readonly job = signal<ScanJob | null>(null);
   readonly step = signal<Step>('photo');
-  readonly status = signal<ScanStatus>('idle');
-  readonly previewUrl = signal<string | null>(null);
+  readonly photoUrl = signal<string | null>(null);
   readonly items = signal<ScanItem[]>([]);
-  readonly isDragging = signal(false);
-  readonly errorMessage = signal<string | null>(null);
   readonly isSaving = signal(false);
   /** Índice do item com o modal "Completar meus dados" aberto. */
   readonly editingIndex = signal<number | null>(null);
+  /** Índice do item com a busca manual ("Não é este livro?") aberta. */
+  readonly searchingIndex = signal<number | null>(null);
 
   readonly selectedCount = computed(() => this.items().filter((item) => item.selected).length);
   readonly allSelected = computed(
@@ -77,37 +74,20 @@ export class ScanPageComponent implements OnDestroy {
     this.editingIndex() !== null ? 2 : this.step() === 'review' ? 1 : 0
   );
 
-  readonly progress = computed(() => {
-    const status = this.status();
-    const hasPhoto = status !== 'idle';
-    const finished = status === 'done';
-    return [
-      { label: 'Foto recebida', state: hasPhoto ? 'done' : 'pending' },
-      { label: 'Títulos reconhecidos na imagem', state: finished ? 'done' : status === 'scanning' ? 'active' : 'pending' },
-      { label: 'Dados buscados no Google Books', state: finished ? 'done' : status === 'scanning' ? 'active' : 'pending' },
-    ];
-  });
-
-  readonly tips: Tip[] = [
-    {
-      title: 'Boa iluminação',
-      text: 'Luz natural ou clara, sem reflexo em capas plásticas.',
-      icon: 'M12 3v2M12 19v2M5 5l1.5 1.5M17.5 17.5 19 19M3 12h2M19 12h2M5 19l1.5-1.5M17.5 6.5 19 5M12 8a4 4 0 1 0 0 8 4 4 0 0 0 0-8z',
-    },
-    {
-      title: 'Títulos visíveis',
-      text: 'Capas de frente ou lombadas alinhadas na estante funcionam.',
-      icon: 'M4 6h16M4 12h10M4 18h7',
-    },
-    {
-      title: 'Vários de uma vez',
-      text: 'Fotografe vários livros juntos; você revisa cada um antes de salvar.',
-      icon: 'M4 4h6v16H4zM14 4h6v16h-6z',
-    },
-  ];
+  ngOnInit(): void {
+    const id = this.route.snapshot.paramMap.get('id');
+    if (!id) {
+      this.router.navigateByUrl('/app/escanear');
+      return;
+    }
+    this.load(id);
+  }
 
   ngOnDestroy(): void {
-    this.releasePreview();
+    const url = this.photoUrl();
+    if (url) {
+      URL.revokeObjectURL(url);
+    }
   }
 
   isLowConfidence(book: DetectedBook): boolean {
@@ -152,31 +132,6 @@ export class ScanPageComponent implements OnDestroy {
     return `${book.title} — ${parts.join(' · ')}`;
   }
 
-  // ---- Foto ----
-
-  onFileSelected(event: Event): void {
-    const input = event.target as HTMLInputElement;
-    const file = input.files?.[0];
-    input.value = '';
-    if (file) {
-      this.startScan(file);
-    }
-  }
-
-  onDragOver(event: DragEvent): void {
-    event.preventDefault();
-    this.isDragging.set(true);
-  }
-
-  onDrop(event: DragEvent): void {
-    event.preventDefault();
-    this.isDragging.set(false);
-    const file = event.dataTransfer?.files?.[0];
-    if (file) {
-      this.startScan(file);
-    }
-  }
-
   goToReview(): void {
     this.step.set('review');
     window.scrollTo({ top: 0 });
@@ -186,8 +141,6 @@ export class ScanPageComponent implements OnDestroy {
     this.step.set('photo');
     window.scrollTo({ top: 0 });
   }
-
-  // ---- Revisão ----
 
   toggle(index: number): void {
     this.items.update((items) =>
@@ -206,10 +159,25 @@ export class ScanPageComponent implements OnDestroy {
     if (!chosen || chosen === item.book) {
       return;
     }
-    // Mantém o que veio da detecção (confiança e posição na foto) e troca só os metadados.
-    chosen.confidence = item.book.confidence;
-    chosen.box2d = item.book.box2d;
-    this.replaceBook(index, chosen);
+    this.replaceBook(index, this.withDetectionAndUserData(chosen, item.book, item.book.confidence));
+  }
+
+  openSearch(index: number): void {
+    this.searchingIndex.set(this.searchingIndex() === index ? null : index);
+  }
+
+  closeSearch(): void {
+    this.searchingIndex.set(null);
+  }
+
+  /** O usuário escolheu o livro certo manualmente: troca os dados e dá a detecção por confirmada. */
+  onSearchSelected(index: number, chosen: DetectedBook): void {
+    const item = this.items()[index];
+    const book = this.withDetectionAndUserData(chosen, item.book, 1);
+    this.items.update((items) =>
+      items.map((current, i) => (i === index ? { book, selected: true, editions: [], chosenByUser: true } : current))
+    );
+    this.searchingIndex.set(null);
   }
 
   openCompletion(index: number): void {
@@ -230,50 +198,63 @@ export class ScanPageComponent implements OnDestroy {
     this.editingIndex.set(null);
   }
 
+  /** Salva os selecionados e apaga o scan (o resultado e a miniatura já cumpriram seu papel). */
   addToLibrary(): void {
+    const job = this.job();
     const books = this.items()
       .filter((item) => item.selected)
       .map((item) => this.toBook(item.book));
-    if (books.length === 0) {
+    if (!job || books.length === 0) {
       return;
     }
 
     this.isSaving.set(true);
     this.bookService
       .createMany(books)
-      .pipe(finalize(() => this.isSaving.set(false)))
-      .subscribe((created) => {
-        this.notificationService.success(
-          `${created.length} ${created.length === 1 ? 'livro adicionado' : 'livros adicionados'} à biblioteca.`
-        );
-        this.router.navigateByUrl('/app/books');
+      .pipe(
+        switchMap((created) => {
+          this.notificationService.success(
+            `${created.length} ${created.length === 1 ? 'livro adicionado' : 'livros adicionados'} à biblioteca.`
+          );
+          return this.scanJobService.delete(job.id);
+        }),
+        finalize(() => this.isSaving.set(false))
+      )
+      .subscribe(() => {
+        this.store.remove(job.id);
+        // Ainda há outros scans prontos? Volta para a lista; senão, para a biblioteca.
+        this.router.navigateByUrl(this.store.readyCount() > 0 ? '/app/escanear' : '/app/books');
       });
   }
 
-  private startScan(file: File): void {
-    if (!this.isFileValid(file)) {
+  /** Descarta o scan sem adicionar nada. */
+  discard(): void {
+    const job = this.job();
+    if (!job) {
       return;
     }
-
-    this.releasePreview();
-    this.previewUrl.set(URL.createObjectURL(file));
-    this.items.set([]);
-    this.step.set('photo');
-    this.status.set('scanning');
-
-    this.bookService.scanBooksImage(file).subscribe({
-      next: (result) => {
-        this.items.set(
-          result.detectedBooks.map((book) => ({ book, selected: true, editions: [] }))
-        );
-        this.status.set('done');
-        this.loadAlternativeEditions();
-      },
-      error: (error: HttpErrorResponse) => {
-        this.errorMessage.set(error.error?.detail ?? null);
-        this.status.set('error');
-      },
+    this.scanJobService.delete(job.id).subscribe(() => {
+      this.store.remove(job.id);
+      this.notificationService.info('Scan descartado.');
+      this.router.navigateByUrl('/app/escanear');
     });
+  }
+
+  private load(id: string): void {
+    this.scanJobService
+      .get(id)
+      .pipe(finalize(() => this.isLoading.set(false)))
+      .subscribe({
+        next: (detail) => {
+          this.job.set(detail.job);
+          this.items.set(detail.detectedBooks.map((book) => ({ book, selected: true, editions: [] })));
+          if (detail.job.hasThumbnail) {
+            this.scanJobService.thumbnailUrl(id).subscribe((url) => this.photoUrl.set(url));
+          }
+          this.loadAlternativeEditions();
+        },
+        error: () => this.router.navigateByUrl('/app/escanear'),
+      });
   }
 
   /** Para detecções incertas, busca outras edições no Google Books para o usuário confirmar. */
@@ -294,22 +275,29 @@ export class ScanPageComponent implements OnDestroy {
     });
   }
 
+  /**
+   * Usa os metadados de `chosen` (outro resultado do Google Books), mas mantém
+   * a posição na foto e o que o usuário já preencheu em "Completar meus dados".
+   */
+  private withDetectionAndUserData(chosen: DetectedBook, current: DetectedBook, confidence: number): DetectedBook {
+    const book = Object.assign(Object.create(Object.getPrototypeOf(chosen)), chosen) as DetectedBook;
+    book.confidence = confidence;
+    book.box2d = current.box2d;
+    book.format = current.format;
+    book.readingStatus = current.readingStatus;
+    book.rating = current.rating;
+    book.purchaseDate = current.purchaseDate;
+    book.isGifted = current.isGifted;
+    book.paidPrice = current.paidPrice;
+    book.readDate = current.readDate;
+    book.userNotes = current.userNotes;
+    return book;
+  }
+
   private replaceBook(index: number, book: DetectedBook): void {
     this.items.update((items) =>
       items.map((item, i) => (i === index ? { ...item, book } : item))
     );
-  }
-
-  private isFileValid(file: File): boolean {
-    if (!environment.allowedImageTypes.includes(file.type)) {
-      this.notificationService.error('Formato inválido. Envie uma imagem JPEG, PNG ou WEBP.');
-      return false;
-    }
-    if (file.size > environment.maxFileSizeMB * 1024 * 1024) {
-      this.notificationService.error(`Arquivo excede o limite de ${environment.maxFileSizeMB}MB.`);
-      return false;
-    }
-    return true;
   }
 
   private toBook(detected: DetectedBook): Book {
@@ -331,12 +319,5 @@ export class ScanPageComponent implements OnDestroy {
     );
     book.pageCount = detected.pageCount;
     return book;
-  }
-
-  private releasePreview(): void {
-    const url = this.previewUrl();
-    if (url) {
-      URL.revokeObjectURL(url);
-    }
   }
 }

@@ -2,6 +2,7 @@ from slowapi import Limiter
 from slowapi.util import get_remote_address
 from starlette.requests import Request
 
+from app.core.config import settings
 from app.core.security import decode_access_token
 
 
@@ -21,4 +22,10 @@ def _rate_limit_key(request: Request) -> str:
     return f"ip:{get_remote_address(request)}"
 
 
-limiter = Limiter(key_func=_rate_limit_key)
+# Contadores no Redis: o limite vale somando todas as instâncias da API. Se o
+# Redis cair, o slowapi continua limitando em memória em vez de derrubar a rota.
+limiter = Limiter(
+    key_func=_rate_limit_key,
+    storage_uri=settings.REDIS_URL,
+    in_memory_fallback_enabled=True,
+)

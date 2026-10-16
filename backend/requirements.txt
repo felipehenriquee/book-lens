@@ -15,4 +15,10 @@ slowapi>=0.1.9
 httpx>=0.27
 google-genai>=0.3
 python-multipart>=0.0.12
+# Normalização das fotos da fila de scan (orientação EXIF, redimensionamento, miniatura)
+Pillow>=10.4
+# Fila de scans: Celery com RabbitMQ como broker (workers em processos separados)
+celery>=5.4
+# Redis: pub/sub das notificações (SSE), tokens, rate limits e vagas por usuário
+redis>=5.0
 email-validator>=2.2

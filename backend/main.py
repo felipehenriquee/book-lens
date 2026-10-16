@@ -7,6 +7,7 @@ from slowapi import _rate_limit_exceeded_handler
 from slowapi.errors import RateLimitExceeded
 from slowapi.middleware import SlowAPIMiddleware
 
+from app.api.dependencies import get_redis
 from app.api.v1.router import api_router
 from app.core.config import settings
 from app.core.rate_limiter import limiter
@@ -16,7 +17,12 @@ from app.services.dev_seed import ensure_dev_user
 @asynccontextmanager
 async def lifespan(_: FastAPI) -> AsyncIterator[None]:
     await ensure_dev_user()
-    yield
+    # Os scans são processados pelos workers do Celery (processos separados:
+    # `celery -A app.worker.celery_app worker`), não dentro da API.
+    try:
+        yield
+    finally:
+        await get_redis().aclose()
 
 
 app = FastAPI(title=settings.PROJECT_NAME, lifespan=lifespan)

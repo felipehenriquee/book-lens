@@ -6,3 +6,5 @@ venv/
 *.egg-info/
 .mypy_cache/
 .pytest_cache/
+# Fotos da fila de scan (temporárias)
+storage/
